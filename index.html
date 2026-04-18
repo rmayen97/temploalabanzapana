@@ -122,6 +122,35 @@
   .btn-secondary { padding: 10px 16px; background: none; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; color: var(--ink-soft); transition: background 0.12s; }
   .btn-secondary:hover { background: var(--cream); }
   .saving-indicator { font-size: 12px; color: var(--ink-muted); text-align: center; margin-top: 8px; min-height: 18px; }
+
+  /* DETAIL MODAL */
+  .detail-header { display: flex; align-items: center; gap: 14px; margin-bottom: 1.25rem; }
+  .detail-avatar { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; color: white; flex-shrink: 0; }
+  .detail-meta { flex: 1; }
+  .detail-name { font-weight: 500; font-size: 15px; }
+  .detail-role { font-size: 12px; color: var(--ink-muted); }
+  .detail-field { display: flex; flex-direction: column; gap: 3px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .detail-field:last-of-type { border-bottom: none; }
+  .detail-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+  .detail-value { font-size: 14px; color: var(--ink); }
+  .detail-activity-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 500; }
+
+  /* PRÓXIMOS EVENTOS */
+  .proximos { margin-top: 2rem; }
+  .proximos-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; margin-bottom: 1rem; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .proximos-title span { font-size: 13px; font-weight: 400; color: var(--ink-muted); font-family: 'DM Sans', sans-serif; }
+  .proximos-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .proximo-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; }
+  .proximo-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+  .proximo-date { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); margin-bottom: 6px; }
+  .proximo-act { font-weight: 500; font-size: 14px; margin-bottom: 6px; }
+  .proximo-collab { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-muted); }
+  .proximo-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .proximo-empty { text-align: center; padding: 2rem; color: var(--ink-muted); font-size: 13px; background: white; border-radius: 12px; border: 1px dashed var(--border); }
+  .days-away { font-size: 11px; padding: 2px 7px; border-radius: 20px; font-weight: 500; margin-left: auto; }
+  .days-today { background: #DCFCE7; color: #15803D; }
+  .days-soon  { background: #FEF3C7; color: #B45309; }
+  .days-far   { background: var(--cream); color: var(--ink-muted); }
 </style>
 </head>
 <body>
@@ -193,12 +222,25 @@
         </div>
         <div class="cal-body" id="cal-body"></div>
       </div>
+      <!-- PRÓXIMOS EVENTOS -->
+      <div class="proximos" id="proximos-section"></div>
     </div>
 
     <div id="list-view" class="list-section">
       <div class="shift-list" id="shift-list-el"></div>
     </div>
   </main>
+</div>
+
+<!-- SHIFT DETAIL MODAL -->
+<div class="modal-bg" id="detail-modal" onclick="closeDetailModal(event)">
+  <div class="modal" style="max-width:380px">
+    <div class="detail-header" id="detail-header"></div>
+    <div id="detail-fields"></div>
+    <div class="modal-actions" style="margin-top:1.25rem">
+      <button class="btn-secondary" onclick="closeDetailModal()">Cerrar</button>
+    </div>
+  </div>
 </div>
 
 <!-- SHIFT MODAL -->
@@ -338,7 +380,7 @@ function getCollab(id) {
 // ============================================================
 function render() {
   renderSidebar();
-  if (state.view === 'cal') renderCalendar();
+  if (state.view === 'cal') { renderCalendar(); renderProximos(); }
   else renderList();
   renderStats();
 }
@@ -377,11 +419,11 @@ function renderCalendar() {
     dayShifts.slice(0,2).forEach(s => {
       const c = getCollab(s.collabId);
       if (!c) return;
-      pills += `<div class="shift-pill" style="background:${c.color.bg};color:${c.color.fg}">
+      pills += `<div class="shift-pill" style="background:${c.color.bg};color:${c.color.fg}" onclick="openShiftDetail(event,'${s.id}')">
         <span class="shift-dot" style="background:${c.color.fg}"></span>${s.activity}
       </div>`;
     });
-    if (dayShifts.length > 2) pills += `<div class="more-shifts">+${dayShifts.length-2} más</div>`;
+    if (dayShifts.length > 2) pills += `<div class="more-shifts" onclick="event.stopPropagation()">+${dayShifts.length-2} más</div>`;
 
     html += `<div class="cal-cell${isToday?' today':''}${isWeekend?' weekend-cell':''}" onclick="openAddShift('${dateStr}')">
       <div class="day-num">${d}</div>${pills}
@@ -510,10 +552,114 @@ async function saveShift() {
 }
 
 // ============================================================
+//  DETAIL MODAL — ver detalle de un turno
+// ============================================================
+function openShiftDetail(e, shiftId) {
+  e.stopPropagation();
+  const s = state.shifts.find(x => String(x.id) === String(shiftId));
+  if (!s) return;
+  const c = getCollab(s.collabId);
+  if (!c) return;
+  const d = new Date(s.date + 'T12:00:00');
+  const fechaLarga = `${DAYS_SH[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+
+  document.getElementById('detail-header').innerHTML = `
+    <div class="detail-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
+    <div class="detail-meta">
+      <div class="detail-name">${c.name}</div>
+      <div class="detail-role">${c.role}</div>
+    </div>`;
+
+  document.getElementById('detail-fields').innerHTML = `
+    <div class="detail-field">
+      <div class="detail-label">Actividad</div>
+      <div class="detail-value">
+        <span class="detail-activity-pill" style="background:${c.color.bg};color:${c.color.fg}">
+          <span style="width:7px;height:7px;border-radius:50%;background:${c.color.fg};display:inline-block"></span>
+          ${s.activity}
+        </span>
+      </div>
+    </div>
+    <div class="detail-field">
+      <div class="detail-label">Fecha</div>
+      <div class="detail-value">${fechaLarga}</div>
+    </div>
+    ${s.notes ? `<div class="detail-field">
+      <div class="detail-label">Notas</div>
+      <div class="detail-value">${s.notes}</div>
+    </div>` : ''}`;
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function closeDetailModal(e) {
+  if (!e || e.target === document.getElementById('detail-modal'))
+    document.getElementById('detail-modal').classList.remove('open');
+}
+
+// ============================================================
+//  PRÓXIMOS EVENTOS
+// ============================================================
+function renderProximos() {
+  const section = document.getElementById('proximos-section');
+  if (!section) return;
+
+  const todayStr = (() => {
+    const n = new Date();
+    return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+  })();
+
+  // Solo turnos desde hoy en adelante, máximo 30 días, máx 6
+  const upcoming = state.shifts
+    .filter(s => s.date >= todayStr)
+    .sort((a,b) => a.date.localeCompare(b.date))
+    .slice(0, 6);
+
+  if (!upcoming.length) {
+    section.innerHTML = `
+      <div class="proximos-title">Próximos eventos <span>— ninguno agendado</span></div>
+      <div class="proximo-empty">No hay turnos próximos. Agrega uno desde el calendario.</div>`;
+    return;
+  }
+
+  const cards = upcoming.map(s => {
+    const c = getCollab(s.collabId);
+    if (!c) return '';
+    const d = new Date(s.date + 'T12:00:00');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const diffDays = Math.round((d - today) / 86400000);
+    let daysLabel, daysClass;
+    if (diffDays === 0)      { daysLabel = 'Hoy';            daysClass = 'days-today'; }
+    else if (diffDays === 1) { daysLabel = 'Mañana';         daysClass = 'days-soon'; }
+    else if (diffDays <= 7)  { daysLabel = `En ${diffDays} días`; daysClass = 'days-soon'; }
+    else                     { daysLabel = `${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}`; daysClass = 'days-far'; }
+
+    return `<div class="proximo-card" style="border-left-color:${c.color.hex}" onclick="openShiftDetail(event,'${s.id}')">
+      <div class="proximo-date" style="display:flex;align-items:center;justify-content:space-between">
+        <span>${DAYS_SH[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}</span>
+        <span class="days-away ${daysClass}">${daysLabel}</span>
+      </div>
+      <div class="proximo-act">${s.activity}</div>
+      <div class="proximo-collab">
+        <span class="proximo-dot" style="background:${c.color.hex}"></span>
+        ${c.name}
+      </div>
+    </div>`;
+  }).join('');
+
+  section.innerHTML = `
+    <div class="proximos-title">Próximos eventos <span>— los más cercanos</span></div>
+    <div class="proximos-list">${cards}</div>`;
+}
+
+// ============================================================
 //  TECLADO
 // ============================================================
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.getElementById('shift-modal').classList.remove('open');
+  if (e.key === 'Escape') {
+    document.getElementById('shift-modal').classList.remove('open');
+    document.getElementById('detail-modal').classList.remove('open');
+  }
 });
 
 // ============================================================
