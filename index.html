@@ -316,11 +316,11 @@ async function init() {
       color: colorFromHex(c.color),
     }));
     state.shifts = data.turnos.map(t => ({
-      id:       t.id,
-      date:     normalizeDate(t.fecha),
-      activity: t.actividad,
-      collabId: t.colaboradorId,
-      notes:    t.notas,
+      id:        t.id,
+      date:      normalizeDate(t.fecha),
+      activity:  t.actividad,
+      collabIds: String(t.colaboradorId).split(',').map(x => x.trim()),
+      notes:     t.notas,
     }));
 
   } catch (err) {
@@ -341,10 +341,10 @@ function loadDemoData() {
   const now = new Date();
   const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
   state.shifts = [
-    { id:'s1', date:`${y}-${m}-05`, activity:'Reunión de apertura',  collabId:'1', notes:'Sala principal' },
-    { id:'s2', date:`${y}-${m}-12`, activity:'Revisión de avances',  collabId:'2', notes:'Zoom' },
-    { id:'s3', date:`${y}-${m}-20`, activity:'Seguimiento clientes', collabId:'1', notes:'' },
-    { id:'s4', date:`${y}-${m}-16`, activity:'Cierre de semana',     collabId:'3', notes:'' },
+    { id:'s1', date:`${y}-${m}-05`, activity:'Reunión de apertura',  collabIds:['1','2'], notes:'Sala principal' },
+    { id:'s2', date:`${y}-${m}-12`, activity:'Revisión de avances',  collabIds:['2'],     notes:'Zoom' },
+    { id:'s3', date:`${y}-${m}-20`, activity:'Seguimiento clientes', collabIds:['1','3'], notes:'' },
+    { id:'s4', date:`${y}-${m}-16`, activity:'Cierre de semana',     collabIds:['3'],     notes:'' },
   ];
 }
 
@@ -416,14 +416,21 @@ function renderCalendar() {
     const isWeekend = dow===0 || dow===6;
 
     let pills = '';
-    dayShifts.slice(0,2).forEach(s => {
-      const c = getCollab(s.collabId);
-      if (!c) return;
-      pills += `<div class="shift-pill" style="background:${c.color.bg};color:${c.color.fg}" onclick="openShiftDetail(event,'${s.id}')">
-        <span class="shift-dot" style="background:${c.color.fg}"></span>${s.activity}
-      </div>`;
+    const maxPills = 2;
+    let pillCount = 0;
+    dayShifts.forEach(s => {
+      s.collabIds.forEach(cid => {
+        if (pillCount >= maxPills) return;
+        const c = getCollab(cid);
+        if (!c) return;
+        pills += `<div class="shift-pill" style="background:${c.color.bg};color:${c.color.fg}" onclick="openShiftDetail(event,'${s.id}')">
+          <span class="shift-dot" style="background:${c.color.fg}"></span>${s.activity}
+        </div>`;
+        pillCount++;
+      });
     });
-    if (dayShifts.length > 2) pills += `<div class="more-shifts" onclick="event.stopPropagation()">+${dayShifts.length-2} más</div>`;
+    const totalAssigned = dayShifts.reduce((acc, s) => acc + s.collabIds.length, 0);
+    if (totalAssigned > maxPills) pills += `<div class="more-shifts" onclick="event.stopPropagation()">+${totalAssigned - maxPills} más</div>`;
 
     html += `<div class="cal-cell${isToday?' today':''}${isWeekend?' weekend-cell':''}" onclick="openAddShift('${dateStr}')">
       <div class="day-num">${d}</div>${pills}
@@ -443,14 +450,19 @@ function renderList() {
     return;
   }
   el.innerHTML = monthShifts.map(s => {
-    const c = getCollab(s.collabId);
-    if (!c) return '';
+    const collabs = s.collabIds.map(id => getCollab(id)).filter(Boolean);
+    if (!collabs.length) return '';
     const d = new Date(s.date+'T12:00:00');
+    const collabLine = collabs.map(c =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;margin-right:8px">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.color.hex}"></span>${c.name}
+      </span>`
+    ).join('');
     return `<div class="shift-row">
       <div class="shift-date-badge"><div class="sdb-day">${d.getDate()}</div><div class="sdb-dow">${DAYS_SH[d.getDay()]}</div></div>
       <div class="shift-info">
         <div class="shift-act">${s.activity}</div>
-        <div class="shift-collab"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.color.hex}"></span>${c.name} · <span style="font-size:11px">${c.role}</span></div>
+        <div class="shift-collab">${collabLine}</div>
         ${s.notes ? `<div class="shift-note">${s.notes}</div>` : ''}
       </div>
     </div>`;
@@ -527,7 +539,7 @@ async function saveShift() {
   btn.disabled = true;
   ind.textContent = 'Guardando...';
 
-  const newShift = { id: String(Date.now()), date, activity: act, collabId, notes };
+  const newShift = { id: String(Date.now()), date, activity: act, collabIds: [collabId], notes };
 
   // Guardar localmente (optimistic update)
   state.shifts.push(newShift);
@@ -558,24 +570,27 @@ function openShiftDetail(e, shiftId) {
   e.stopPropagation();
   const s = state.shifts.find(x => String(x.id) === String(shiftId));
   if (!s) return;
-  const c = getCollab(s.collabId);
-  if (!c) return;
+  const collabs = s.collabIds.map(id => getCollab(id)).filter(Boolean);
+  if (!collabs.length) return;
   const d = new Date(s.date + 'T12:00:00');
   const fechaLarga = `${DAYS_SH[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 
-  document.getElementById('detail-header').innerHTML = `
-    <div class="detail-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
-    <div class="detail-meta">
-      <div class="detail-name">${c.name}</div>
-      <div class="detail-role">${c.role}</div>
-    </div>`;
+  const avatarsHtml = collabs.map(c =>
+    `<div style="display:flex;align-items:center;gap:10px;margin-bottom:${collabs.length>1?'8px':'0'}">
+      <div class="detail-avatar" style="background:${c.color.hex};width:36px;height:36px;font-size:12px">${initials(c.name)}</div>
+      <div><div class="detail-name" style="font-size:14px">${c.name}</div><div class="detail-role">${c.role}</div></div>
+    </div>`
+  ).join('');
 
+  document.getElementById('detail-header').innerHTML = `<div style="width:100%">${avatarsHtml}</div>`;
+
+  const firstC = collabs[0];
   document.getElementById('detail-fields').innerHTML = `
     <div class="detail-field">
       <div class="detail-label">Actividad</div>
       <div class="detail-value">
-        <span class="detail-activity-pill" style="background:${c.color.bg};color:${c.color.fg}">
-          <span style="width:7px;height:7px;border-radius:50%;background:${c.color.fg};display:inline-block"></span>
+        <span class="detail-activity-pill" style="background:${firstC.color.bg};color:${firstC.color.fg}">
+          <span style="width:7px;height:7px;border-radius:50%;background:${firstC.color.fg};display:inline-block"></span>
           ${s.activity}
         </span>
       </div>
@@ -623,27 +638,31 @@ function renderProximos() {
   }
 
   const cards = upcoming.map(s => {
-    const c = getCollab(s.collabId);
-    if (!c) return '';
+    const collabs = s.collabIds.map(id => getCollab(id)).filter(Boolean);
+    if (!collabs.length) return '';
+    const firstC = collabs[0];
     const d = new Date(s.date + 'T12:00:00');
     const today = new Date(); today.setHours(0,0,0,0);
     const diffDays = Math.round((d - today) / 86400000);
     let daysLabel, daysClass;
-    if (diffDays === 0)      { daysLabel = 'Hoy';            daysClass = 'days-today'; }
-    else if (diffDays === 1) { daysLabel = 'Mañana';         daysClass = 'days-soon'; }
+    if (diffDays === 0)      { daysLabel = 'Hoy';                 daysClass = 'days-today'; }
+    else if (diffDays === 1) { daysLabel = 'Mañana';              daysClass = 'days-soon'; }
     else if (diffDays <= 7)  { daysLabel = `En ${diffDays} días`; daysClass = 'days-soon'; }
     else                     { daysLabel = `${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}`; daysClass = 'days-far'; }
 
-    return `<div class="proximo-card" style="border-left-color:${c.color.hex}" onclick="openShiftDetail(event,'${s.id}')">
+    const collabLine = collabs.map(c =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">
+        <span class="proximo-dot" style="background:${c.color.hex}"></span>${c.name}
+      </span>`
+    ).join('');
+
+    return `<div class="proximo-card" style="border-left-color:${firstC.color.hex}" onclick="openShiftDetail(event,'${s.id}')">
       <div class="proximo-date" style="display:flex;align-items:center;justify-content:space-between">
         <span>${DAYS_SH[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}</span>
         <span class="days-away ${daysClass}">${daysLabel}</span>
       </div>
       <div class="proximo-act">${s.activity}</div>
-      <div class="proximo-collab">
-        <span class="proximo-dot" style="background:${c.color.hex}"></span>
-        ${c.name}
-      </div>
+      <div class="proximo-collab">${collabLine}</div>
     </div>`;
   }).join('');
 
