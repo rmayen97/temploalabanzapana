@@ -3,26 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestión de Turnos</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<title>Turnos — Templo Alabanza Panamá</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --cream: #F7F4EE; --cream-dark: #EDE9E0; --ink: #1C1917; --ink-soft: #44403C;
     --ink-muted: #78716C; --forest: #1B5E4B; --forest-light: #D1EAE3;
+    --amber: #D97706; --amber-light: #FEF3C7;
+    --blue: #2563EB; --blue-light: #DBEAFE;
     --border: rgba(28,25,23,0.12); --radius: 12px;
     --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.08);
   }
   body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; font-size: 14px; }
 
   /* HEADER */
-  .header { background: var(--ink); color: var(--cream); padding: 0 2rem; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
-  .header-brand { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; letter-spacing: -0.3px; }
+  .header { background: var(--ink); color: var(--cream); padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 100; }
+  .header-brand { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
   .header-brand span { color: #86EFAC; }
-  .header-nav { display: flex; gap: 4px; }
-  .tab-btn { background: none; border: none; color: rgba(247,244,238,0.5); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
-  .tab-btn.active { background: rgba(247,244,238,0.12); color: var(--cream); }
-  .tab-btn:hover:not(.active) { color: rgba(247,244,238,0.8); }
+  .header-sub { font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(247,244,238,0.5); font-weight: 400; }
 
   /* LOADER */
   .loader-overlay { position: fixed; inset: 0; background: var(--cream); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: opacity 0.3s; }
@@ -31,126 +30,107 @@
   .loader-text { font-size: 13px; color: var(--ink-muted); }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ERROR BANNER */
-  .error-banner { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; padding: 14px 18px; margin: 1.5rem 2rem; font-size: 13px; color: #B91C1C; display: none; }
+  /* BANNERS */
+  .error-banner { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; padding: 14px 18px; margin: 1rem 1.5rem; font-size: 13px; color: #B91C1C; display: none; }
   .error-banner.show { display: block; }
-  .error-banner strong { display: block; margin-bottom: 4px; }
-
-  /* CONFIG BANNER */
-  .config-banner { background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px 18px; margin: 1.5rem 2rem; font-size: 13px; color: #92400E; }
-  .config-banner strong { display: block; margin-bottom: 4px; font-size: 14px; }
+  .config-banner { background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px 18px; margin: 1rem 1.5rem; font-size: 13px; color: #92400E; display: none; }
   .config-banner code { background: rgba(0,0,0,0.08); padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; }
 
   /* LAYOUT */
-  .app { display: flex; height: calc(100vh - 60px); overflow: hidden; }
+  .app { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
 
-  /* SIDEBAR */
-  .sidebar { width: 280px; flex-shrink: 0; background: white; border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-  .sidebar-section { padding: 1.25rem 1.25rem 0; flex: 1; overflow-y: auto; }
-  .sidebar-title { font-family: 'Fraunces', serif; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-muted); margin-bottom: 1rem; }
-  .collab-card { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; margin-bottom: 4px; transition: background 0.12s; }
-  .collab-card:hover { background: var(--cream); }
-  .collab-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; flex-shrink: 0; color: white; }
-  .collab-info { flex: 1; min-width: 0; }
-  .collab-name { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .collab-role { font-size: 11px; color: var(--ink-muted); }
-  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 1rem 1.25rem; border-top: 1px solid var(--border); }
-  .stat-box { background: var(--cream); border-radius: 10px; padding: 10px 12px; }
-  .stat-num { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; line-height: 1; }
-  .stat-lbl { font-size: 11px; color: var(--ink-muted); margin-top: 3px; }
+  /* WEEK NAV */
+  .week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px; }
+  .week-title { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 300; letter-spacing: -0.5px; }
+  .week-title em { font-style: italic; color: var(--forest); }
+  .week-controls { display: flex; gap: 8px; align-items: center; }
+  .nav-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: white; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.12s; color: var(--ink-soft); }
+  .nav-btn:hover { background: var(--ink); color: white; border-color: var(--ink); }
+  .today-btn { background: white; border: 1px solid var(--border); padding: 6px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--ink-soft); transition: all 0.12s; }
+  .today-btn:hover { background: var(--ink); color: white; border-color: var(--ink); }
 
-  /* MAIN */
-  .main { flex: 1; overflow-y: auto; padding: 1.5rem 2rem; }
-  .month-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
-  .month-title { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 300; letter-spacing: -0.5px; }
-  .month-title em { font-style: italic; color: var(--forest); }
-  .nav-arrow { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: white; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.12s; color: var(--ink-soft); }
-  .nav-arrow:hover { background: var(--ink); color: white; border-color: var(--ink); }
+  /* WEEKLY GRID */
+  .week-grid { display: grid; grid-template-columns: 60px repeat(7, 1fr); background: white; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
 
-  /* CALENDAR */
-  .cal-grid { background: white; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
-  .cal-header { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--border); background: var(--cream); }
-  .cal-dow { text-align: center; padding: 10px 0; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
-  .cal-dow.weekend { color: #D97706; }
-  .cal-body { display: grid; grid-template-columns: repeat(7, 1fr); }
-  .cal-cell { min-height: 90px; padding: 8px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; position: relative; }
-  .cal-cell:nth-child(7n) { border-right: none; }
-  .cal-cell:hover:not(.empty) { background: #FAFAF9; }
-  .cal-cell.empty { background: var(--cream); opacity: 0.5; cursor: default; }
-  .cal-cell.today { background: #F0FDF4; }
-  .cal-cell.today .day-num { background: var(--forest); color: white; }
-  .day-num { font-size: 12px; font-weight: 500; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-bottom: 4px; color: var(--ink-soft); }
-  .cal-cell.weekend-cell .day-num { color: #D97706; }
-  .shift-pill { display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 6px; font-size: 10.5px; font-weight: 500; margin-bottom: 2px; cursor: pointer; transition: opacity 0.1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-  .shift-pill:hover { opacity: 0.75; }
-  .shift-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-  .more-shifts { font-size: 10px; color: var(--ink-muted); padding: 1px 4px; }
+  .grid-corner { background: var(--cream); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
+  .grid-day-header { text-align: center; padding: 12px 4px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); background: var(--cream); }
+  .grid-day-header:last-child { border-right: none; }
+  .grid-day-header.today { background: #F0FDF4; }
+  .day-name { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+  .day-number { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; margin-top: 2px; }
+  .grid-day-header.today .day-number { background: var(--forest); color: white; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; }
 
-  /* LIST VIEW */
-  .list-section { display: none; }
-  .list-section.active, .cal-section.active { display: block; }
-  .cal-section { display: none; }
-  .shift-list { display: flex; flex-direction: column; gap: 8px; }
-  .shift-row { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 12px; transition: box-shadow 0.12s; }
-  .shift-row:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-  .shift-date-badge { text-align: center; min-width: 44px; background: var(--cream); border-radius: 8px; padding: 6px; }
-  .sdb-day { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; line-height: 1; }
-  .sdb-dow { font-size: 10px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-  .shift-info { flex: 1; }
-  .shift-act { font-weight: 500; font-size: 14px; }
-  .shift-collab { font-size: 12px; color: var(--ink-muted); display: flex; align-items: center; gap: 6px; margin-top: 2px; }
-  .shift-note { font-size: 12px; color: var(--ink-muted); margin-top: 2px; font-style: italic; }
-  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--ink-muted); }
-  .empty-icon { font-size: 40px; margin-bottom: 12px; }
-  .empty-title { font-family: 'Fraunces', serif; font-size: 18px; color: var(--ink-soft); margin-bottom: 6px; }
+  .grid-turno-label { display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px; min-height: 100px; }
+  .turno-badge { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px; }
+  .turno-am .turno-badge { background: var(--amber-light); color: var(--amber); }
+  .turno-pm .turno-badge { background: var(--blue-light); color: var(--blue); }
 
-  /* MODAL */
+  .grid-cell { padding: 8px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 100px; display: flex; flex-direction: column; gap: 4px; }
+  .grid-cell:nth-child(8n) { border-right: none; }
+  .grid-cell.today-col { background: #FAFFF8; }
+  .week-grid > .grid-cell:nth-last-child(-n+8) { border-bottom: none; }
+  .week-grid > .grid-turno-label:nth-last-child(-n+8) { border-bottom: none; }
+
+  .person-card { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 8px; font-size: 12px; transition: opacity 0.1s; }
+  .person-card:hover { opacity: 0.8; }
+  .person-avatar { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: white; flex-shrink: 0; }
+  .person-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .person-roles { font-size: 10px; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* TEAM PANEL */
+  .team-section { margin-top: 1.5rem; }
+  .section-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; margin-bottom: 1rem; display: flex; align-items: center; gap: 8px; }
+  .section-title span { font-size: 13px; font-weight: 400; color: var(--ink-muted); font-family: 'DM Sans', sans-serif; }
+  .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+  .team-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px; border-left: 3px solid transparent; }
+  .team-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: white; flex-shrink: 0; }
+  .team-name { font-weight: 500; font-size: 14px; }
+  .team-roles { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+  .role-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; margin-top: 2px; }
+
+  /* EMPTY STATE */
+  .empty-cell { color: var(--ink-muted); font-size: 11px; font-style: italic; opacity: 0.5; margin: auto; }
+
+  /* MODAL - shift detail */
   .modal-bg { position: fixed; inset: 0; background: rgba(28,25,23,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.18s; }
   .modal-bg.open { opacity: 1; pointer-events: all; }
-  .modal { background: white; border-radius: 16px; width: 100%; max-width: 420px; padding: 1.75rem; transform: translateY(12px); transition: transform 0.18s; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal { background: white; border-radius: 16px; width: 100%; max-width: 380px; padding: 1.75rem; transform: translateY(12px); transition: transform 0.18s; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
   .modal-bg.open .modal { transform: translateY(0); }
   .modal-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; }
-  .modal-date { font-size: 13px; color: var(--ink-muted); margin-top: -10px; margin-bottom: 1.25rem; }
-  .form-group { margin-bottom: 1rem; }
-  .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
-  .form-input, .form-select { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: white; color: var(--ink); outline: none; transition: border 0.12s; appearance: none; }
-  .form-input:focus, .form-select:focus { border-color: var(--forest); }
-  .modal-actions { display: flex; gap: 8px; margin-top: 1.25rem; }
-  .btn-primary { flex: 1; padding: 10px; background: var(--forest); color: white; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.12s; }
-  .btn-primary:hover { background: #145240; }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-secondary { padding: 10px 16px; background: none; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; color: var(--ink-soft); transition: background 0.12s; }
-  .btn-secondary:hover { background: var(--cream); }
-  .saving-indicator { font-size: 12px; color: var(--ink-muted); text-align: center; margin-top: 8px; min-height: 18px; }
-
-  /* DETAIL MODAL */
-  .detail-header { display: flex; align-items: center; gap: 14px; margin-bottom: 1.25rem; }
-  .detail-avatar { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; color: white; flex-shrink: 0; }
-  .detail-meta { flex: 1; }
-  .detail-name { font-weight: 500; font-size: 15px; }
-  .detail-role { font-size: 12px; color: var(--ink-muted); }
   .detail-field { display: flex; flex-direction: column; gap: 3px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
   .detail-field:last-of-type { border-bottom: none; }
   .detail-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
   .detail-value { font-size: 14px; color: var(--ink); }
-  .detail-activity-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: 500; }
+  .btn-secondary { padding: 10px 16px; background: none; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; color: var(--ink-soft); transition: background 0.12s; width: 100%; margin-top: 1rem; }
+  .btn-secondary:hover { background: var(--cream); }
 
-  /* PRÓXIMOS EVENTOS */
-  .proximos { margin-top: 2rem; }
-  .proximos-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; margin-bottom: 1rem; color: var(--ink); display: flex; align-items: center; gap: 8px; }
-  .proximos-title span { font-size: 13px; font-weight: 400; color: var(--ink-muted); font-family: 'DM Sans', sans-serif; }
-  .proximos-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
-  .proximo-card { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 14px; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; }
-  .proximo-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
-  .proximo-date { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); margin-bottom: 6px; }
-  .proximo-act { font-weight: 500; font-size: 14px; margin-bottom: 6px; }
-  .proximo-collab { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-muted); }
-  .proximo-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .proximo-empty { text-align: center; padding: 2rem; color: var(--ink-muted); font-size: 13px; background: white; border-radius: 12px; border: 1px dashed var(--border); }
-  .days-away { font-size: 11px; padding: 2px 7px; border-radius: 20px; font-weight: 500; margin-left: auto; }
-  .days-today { background: #DCFCE7; color: #15803D; }
-  .days-soon  { background: #FEF3C7; color: #B45309; }
-  .days-far   { background: var(--cream); color: var(--ink-muted); }
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    .week-grid { grid-template-columns: 44px repeat(7, 1fr); font-size: 12px; }
+    .grid-day-header { padding: 8px 2px; }
+    .day-number { font-size: 16px; }
+    .grid-cell { padding: 4px; min-height: 70px; }
+    .person-card { padding: 3px 4px; gap: 3px; }
+    .person-name { font-size: 10px; }
+    .person-roles { display: none; }
+    .person-avatar { width: 18px; height: 18px; font-size: 7px; }
+    .turno-badge { font-size: 10px; padding: 3px 6px; }
+    .week-title { font-size: 18px; }
+    .app { padding: 1rem; }
+    .header { padding: 0 1rem; }
+    .team-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 480px) {
+    .week-grid { grid-template-columns: 36px repeat(7, 1fr); }
+    .day-name { font-size: 9px; }
+    .day-number { font-size: 14px; }
+    .person-avatar { display: none; }
+    .person-card { padding: 2px 4px; border-radius: 4px; }
+    .person-name { font-size: 9px; }
+    .grid-cell { min-height: 56px; gap: 2px; }
+    .team-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
@@ -163,112 +143,47 @@
 
 <!-- HEADER -->
 <header class="header">
-  <div class="header-brand">Turnos<span>.</span></div>
-  <nav class="header-nav">
-    <button class="tab-btn active" onclick="switchView('cal')">Calendario</button>
-    <button class="tab-btn" onclick="switchView('list')">Lista</button>
-  </nav>
-  <div>
-    <button onclick="openAddShift(null)" style="background:rgba(247,244,238,0.15);border:none;color:var(--cream);padding:6px 14px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;" onmouseover="this.style.background='rgba(247,244,238,0.25)'" onmouseout="this.style.background='rgba(247,244,238,0.15)'">+ Agregar turno</button>
+  <div class="header-brand">
+    Turnos<span>.</span>
+    <div class="header-sub">Templo Alabanza Panamá</div>
   </div>
 </header>
 
-<!-- CONFIG BANNER (oculto por defecto, se muestra si no hay API URL) -->
-<div class="config-banner" id="config-banner" style="display:none">
+<!-- BANNERS -->
+<div class="config-banner" id="config-banner">
   <strong>⚙️ Conecta tu Google Sheet</strong>
   Abre este archivo, busca la variable <code>API_URL</code> al inicio del script y pega la URL de tu Web App de Google Apps Script.
 </div>
-
 <div class="error-banner" id="error-banner">
   <strong>No se pudo conectar con Google Sheets</strong>
-  Verifica que la URL de la API sea correcta y que el script esté publicado como Web App pública.
+  Usando datos de demostración. Verifica que la URL de la API sea correcta.
 </div>
 
 <!-- APP -->
 <div class="app">
-  <aside class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-title">Colaboradores</div>
-      <div id="collab-list"></div>
-    </div>
-    <div class="stat-row">
-      <div class="stat-box">
-        <div class="stat-num" id="stat-turnos">—</div>
-        <div class="stat-lbl">Turnos este mes</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-num" id="stat-colab">—</div>
-        <div class="stat-lbl">Colaboradores</div>
-      </div>
-    </div>
-  </aside>
-
-  <main class="main">
-    <div class="month-nav">
-      <div class="month-title" id="month-title"></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="nav-arrow" onclick="changeMonth(-1)">&#8592;</button>
-        <button onclick="goToday()" style="background:white;border:1px solid var(--border);padding:6px 12px;border-radius:8px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--ink-soft);">Hoy</button>
-        <button class="nav-arrow" onclick="changeMonth(1)">&#8594;</button>
-      </div>
-    </div>
-
-    <div id="cal-view" class="cal-section active">
-      <div class="cal-grid">
-        <div class="cal-header">
-          <div class="cal-dow">Dom</div><div class="cal-dow">Lun</div><div class="cal-dow">Mar</div>
-          <div class="cal-dow">Mié</div><div class="cal-dow">Jue</div><div class="cal-dow">Vie</div>
-          <div class="cal-dow weekend">Sáb</div>
-        </div>
-        <div class="cal-body" id="cal-body"></div>
-      </div>
-      <!-- PRÓXIMOS EVENTOS -->
-      <div class="proximos" id="proximos-section"></div>
-    </div>
-
-    <div id="list-view" class="list-section">
-      <div class="shift-list" id="shift-list-el"></div>
-    </div>
-  </main>
-</div>
-
-<!-- SHIFT DETAIL MODAL -->
-<div class="modal-bg" id="detail-modal" onclick="closeDetailModal(event)">
-  <div class="modal" style="max-width:380px">
-    <div class="detail-header" id="detail-header"></div>
-    <div id="detail-fields"></div>
-    <div class="modal-actions" style="margin-top:1.25rem">
-      <button class="btn-secondary" onclick="closeDetailModal()">Cerrar</button>
+  <!-- WEEK NAV -->
+  <div class="week-nav">
+    <div class="week-title" id="week-title"></div>
+    <div class="week-controls">
+      <button class="nav-btn" onclick="changeWeek(-1)">&#8592;</button>
+      <button class="today-btn" onclick="goThisWeek()">Esta semana</button>
+      <button class="nav-btn" onclick="changeWeek(1)">&#8594;</button>
     </div>
   </div>
+
+  <!-- WEEKLY GRID -->
+  <div class="week-grid" id="week-grid"></div>
+
+  <!-- TEAM -->
+  <div class="team-section" id="team-section"></div>
 </div>
 
-<!-- SHIFT MODAL -->
-<div class="modal-bg" id="shift-modal" onclick="closeShiftModal(event)">
+<!-- DETAIL MODAL -->
+<div class="modal-bg" id="detail-modal" onclick="closeModal(event)">
   <div class="modal">
-    <div class="modal-title">Nuevo turno</div>
-    <div class="modal-date" id="modal-date-display"></div>
-    <div class="form-group">
-      <label class="form-label">Actividad</label>
-      <input class="form-input" id="shift-act" placeholder="ej. Reunión de apertura" />
-    </div>
-    <div class="form-group">
-      <label class="form-label">Colaborador</label>
-      <select class="form-select" id="shift-collab"></select>
-    </div>
-    <div class="form-group" id="date-group">
-      <label class="form-label">Fecha</label>
-      <input class="form-input" type="date" id="shift-date" />
-    </div>
-    <div class="form-group">
-      <label class="form-label">Notas <span style="opacity:.5;font-size:11px">(opcional)</span></label>
-      <input class="form-input" id="shift-notes" placeholder="ej. Sala principal" />
-    </div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeShiftModal()">Cancelar</button>
-      <button class="btn-primary" id="save-btn" onclick="saveShift()">Guardar turno</button>
-    </div>
-    <div class="saving-indicator" id="saving-indicator"></div>
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
   </div>
 </div>
 
@@ -276,28 +191,95 @@
 // ============================================================
 //  CONFIGURACIÓN — reemplaza con tu URL de Apps Script
 // ============================================================
-const API_URL = "https://script.google.com/macros/s/AKfycbwDNm8Orw6LUzFotyuH7BzdFFegGiSp0n1_zAoaozxDTrqj6XRq2b8YoMhAACPlf6e49A/exec";
-// Ejemplo: "https://script.google.com/macros/s/AKfycbx.../exec"
+const API_URL = "https://script.google.com/macros/s/AKfycbzvAQkajztuUMo_gyweSi0nUn02o6HApl1iFZUlrb7u_Mx5accPXsuN0m3OlyeKs5BTjA/exec";
 // ============================================================
 
-const MONTHS   = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-const DAYS_SH  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAYS_SHORT = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DAYS_FULL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+
+const COLOR_MAP = [
+  { hex:'#16A34A', bg:'#DCFCE7', fg:'#15803D' },
+  { hex:'#2563EB', bg:'#DBEAFE', fg:'#1D4ED8' },
+  { hex:'#DB2777', bg:'#FCE7F3', fg:'#BE185D' },
+  { hex:'#D97706', bg:'#FEF3C7', fg:'#B45309' },
+  { hex:'#8B5CF6', bg:'#F3E8FF', fg:'#7C3AED' },
+  { hex:'#EA580C', bg:'#FFEDD5', fg:'#C2410C' },
+  { hex:'#06B6D4', bg:'#CFFAFE', fg:'#0E7490' },
+  { hex:'#64748B', bg:'#F1F5F9', fg:'#475569' },
+  { hex:'#ff0000', bg:'#FEE2E2', fg:'#DC2626' },
+  { hex:'#169451', bg:'#D1FAE5', fg:'#047857' },
+];
 
 let state = {
-  view: 'cal',
-  year: new Date().getFullYear(),
-  month: new Date().getMonth(),
+  weekStart: getMonday(new Date()),
   collaborators: [],
   shifts: [],
-  editingDate: null,
-  nextId: 1000,
 };
 
+function getMonday(d) {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  date.setDate(diff);
+  date.setHours(0, 0, 0, 0);
+  return date;
+}
+
+function getWeekDates(monday) {
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + i);
+    dates.push(d);
+  }
+  return dates;
+}
+
+function dateToStr(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function todayStr() { return dateToStr(new Date()); }
+
+function colorFromHex(hex) {
+  if (!hex) return COLOR_MAP[7];
+  const normalized = hex.toLowerCase();
+  const found = COLOR_MAP.find(c => c.hex.toLowerCase() === normalized);
+  return found || { hex, bg: '#F1F5F9', fg: '#475569' };
+}
+
+function initials(name) {
+  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
+function getCollab(id) {
+  return state.collaborators.find(c => String(c.id) === String(id));
+}
+
+function normalizeDate(raw) {
+  if (!raw) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)) {
+    const [m, d, y] = raw.split('/');
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+  if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(raw)) {
+    const [d, m, y] = raw.split('-');
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+  try {
+    const d = new Date(raw);
+    if (!isNaN(d)) return dateToStr(d);
+  } catch (e) {}
+  return raw;
+}
+
 // ============================================================
-//  INICIO — carga datos desde la API
+//  INIT
 // ============================================================
 async function init() {
-  if (!API_URL || API_URL === "TU_URL_AQUI") {
+  if (!API_URL || API_URL === 'TU_URL_AQUI') {
     document.getElementById('config-banner').style.display = 'block';
     document.getElementById('loader').classList.add('hidden');
     loadDemoData();
@@ -306,24 +288,26 @@ async function init() {
   }
 
   try {
-    const res  = await fetch(API_URL);
+    const res = await fetch(API_URL);
     const data = await res.json();
 
     state.collaborators = data.colaboradores.map(c => ({
-      id:    c.id,
-      name:  c.nombre,
-      role:  c.rol,
+      id: String(c.id),
+      name: c.nombre,
+      roles: c.roles || c.asignación || c.rol || '',
       color: colorFromHex(c.color),
     }));
-    state.shifts = data.turnos.map(t => ({
-      id:        t.id,
-      date:      normalizeDate(t.fecha),
-      activity:  t.actividad,
-      collabIds: String(t.colaboradorId).split(',').map(x => x.trim()),
-      notes:     t.notas,
-    }));
 
+    state.shifts = data.turnos.map(t => ({
+      id: String(t.id),
+      date: normalizeDate(t.fecha),
+      turno: (t.turno || 'AM').toUpperCase(),
+      collabId: String(t.colaboradorId),
+      rol: t.rol || '',
+      notas: t.notas || '',
+    }));
   } catch (err) {
+    console.error('API error:', err);
     document.getElementById('error-banner').classList.add('show');
     loadDemoData();
   }
@@ -334,382 +318,233 @@ async function init() {
 
 function loadDemoData() {
   state.collaborators = [
-    { id:'1', name:'Ana García',    role:'Coordinador',   color: colorFromHex('#16A34A') },
-    { id:'2', name:'Carlos López',  role:'Técnico',       color: colorFromHex('#2563EB') },
-    { id:'3', name:'María Torres',  role:'Administrativo',color: colorFromHex('#DB2777') },
+    { id: '1', name: 'Rodrigo Mayén', roles: 'Guitarra, Cantante', color: colorFromHex('#16A34A') },
+    { id: '2', name: 'Sam Castro', roles: 'Guitarra', color: colorFromHex('#ff0000') },
+    { id: '3', name: 'Raquel Orellana', roles: 'Micrófono', color: colorFromHex('#169451') },
+    { id: '4', name: 'Ana García', roles: 'Teclado, Cantante', color: colorFromHex('#2563EB') },
+    { id: '5', name: 'Carlos López', roles: 'Bajo', color: colorFromHex('#DB2777') },
+    { id: '6', name: 'María Torres', roles: 'Batería', color: colorFromHex('#D97706') },
+    { id: '7', name: 'José Pérez', roles: 'Cantante', color: colorFromHex('#8B5CF6') },
+    { id: '8', name: 'Laura Díaz', roles: 'Micrófono, Cantante', color: colorFromHex('#EA580C') },
   ];
+
   const now = new Date();
-  const y = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0');
+  const mon = getMonday(now);
+  const dates = getWeekDates(mon).map(dateToStr);
+
   state.shifts = [
-    { id:'s1', date:`${y}-${m}-05`, activity:'Reunión de apertura',  collabIds:['1','2'], notes:'Sala principal' },
-    { id:'s2', date:`${y}-${m}-12`, activity:'Revisión de avances',  collabIds:['2'],     notes:'Zoom' },
-    { id:'s3', date:`${y}-${m}-20`, activity:'Seguimiento clientes', collabIds:['1','3'], notes:'' },
-    { id:'s4', date:`${y}-${m}-16`, activity:'Cierre de semana',     collabIds:['3'],     notes:'' },
+    { id: 's1', date: dates[0], turno: 'AM', collabId: '1', rol: 'Cantante', notas: '' },
+    { id: 's2', date: dates[0], turno: 'AM', collabId: '2', rol: 'Guitarra', notas: '' },
+    { id: 's3', date: dates[0], turno: 'AM', collabId: '4', rol: 'Teclado', notas: '' },
+    { id: 's4', date: dates[0], turno: 'AM', collabId: '7', rol: 'Cantante', notas: '' },
+    { id: 's5', date: dates[0], turno: 'PM', collabId: '1', rol: 'Guitarra, Cantante', notas: '' },
+    { id: 's6', date: dates[0], turno: 'PM', collabId: '5', rol: 'Bajo', notas: '' },
+    { id: 's7', date: dates[0], turno: 'PM', collabId: '6', rol: 'Batería', notas: '' },
+    { id: 's8', date: dates[0], turno: 'PM', collabId: '8', rol: 'Cantante', notas: '' },
+
+    { id: 's9',  date: dates[2], turno: 'AM', collabId: '1', rol: 'Guitarra', notas: '' },
+    { id: 's10', date: dates[2], turno: 'AM', collabId: '3', rol: 'Micrófono', notas: '' },
+    { id: 's11', date: dates[2], turno: 'AM', collabId: '5', rol: 'Bajo', notas: '' },
+    { id: 's12', date: dates[2], turno: 'AM', collabId: '7', rol: 'Cantante', notas: '' },
+    { id: 's13', date: dates[2], turno: 'PM', collabId: '2', rol: 'Guitarra', notas: '' },
+    { id: 's14', date: dates[2], turno: 'PM', collabId: '4', rol: 'Cantante', notas: '' },
+    { id: 's15', date: dates[2], turno: 'PM', collabId: '6', rol: 'Batería', notas: '' },
+    { id: 's16', date: dates[2], turno: 'PM', collabId: '8', rol: 'Micrófono', notas: '' },
+
+    { id: 's17', date: dates[4], turno: 'AM', collabId: '3', rol: 'Micrófono', notas: '' },
+    { id: 's18', date: dates[4], turno: 'AM', collabId: '4', rol: 'Teclado, Cantante', notas: '' },
+    { id: 's19', date: dates[4], turno: 'PM', collabId: '1', rol: 'Guitarra', notas: '' },
+    { id: 's20', date: dates[4], turno: 'PM', collabId: '5', rol: 'Bajo', notas: '' },
+    { id: 's21', date: dates[4], turno: 'PM', collabId: '7', rol: 'Cantante', notas: '' },
+
+    { id: 's22', date: dates[6], turno: 'AM', collabId: '1', rol: 'Cantante', notas: 'Servicio dominical' },
+    { id: 's23', date: dates[6], turno: 'AM', collabId: '2', rol: 'Guitarra', notas: 'Servicio dominical' },
+    { id: 's24', date: dates[6], turno: 'AM', collabId: '3', rol: 'Micrófono', notas: '' },
+    { id: 's25', date: dates[6], turno: 'AM', collabId: '4', rol: 'Teclado', notas: '' },
+    { id: 's26', date: dates[6], turno: 'PM', collabId: '5', rol: 'Bajo', notas: '' },
+    { id: 's27', date: dates[6], turno: 'PM', collabId: '6', rol: 'Batería', notas: '' },
+    { id: 's28', date: dates[6], turno: 'PM', collabId: '7', rol: 'Cantante', notas: '' },
+    { id: 's29', date: dates[6], turno: 'PM', collabId: '8', rol: 'Micrófono, Cantante', notas: '' },
   ];
-}
-
-// ============================================================
-//  COLOR HELPERS
-// ============================================================
-const COLOR_MAP = [
-  { hex:'#16A34A', bg:'#DCFCE7', fg:'#15803D' },
-  { hex:'#2563EB', bg:'#DBEAFE', fg:'#1D4ED8' },
-  { hex:'#DB2777', bg:'#FCE7F3', fg:'#BE185D' },
-  { hex:'#D97706', bg:'#FEF3C7', fg:'#B45309' },
-  { hex:'#8B5CF6', bg:'#F3E8FF', fg:'#7C3AED' },
-  { hex:'#EA580C', bg:'#FFEDD5', fg:'#C2410C' },
-  { hex:'#06B6D4', bg:'#CFFAFE', fg:'#0E7490' },
-  { hex:'#64748B', bg:'#F1F5F9', fg:'#475569' },
-];
-
-function colorFromHex(hex) {
-  const found = COLOR_MAP.find(c => c.hex === hex);
-  return found || { hex, bg:'#F1F5F9', fg:'#475569' };
-}
-
-function initials(name) {
-  return name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-}
-
-function getCollab(id) {
-  return state.collaborators.find(c => String(c.id) === String(id));
 }
 
 // ============================================================
 //  RENDER
 // ============================================================
 function render() {
-  renderSidebar();
-  if (state.view === 'cal') { renderCalendar(); renderProximos(); }
-  else renderList();
-  renderStats();
+  renderWeekTitle();
+  renderGrid();
+  renderTeam();
 }
 
-function renderSidebar() {
-  document.getElementById('collab-list').innerHTML = state.collaborators.map(c => `
-    <div class="collab-card">
-      <div class="collab-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
-      <div class="collab-info">
-        <div class="collab-name">${c.name}</div>
-        <div class="collab-role">${c.role}</div>
-      </div>
-    </div>
-  `).join('');
+function renderWeekTitle() {
+  const dates = getWeekDates(state.weekStart);
+  const first = dates[0];
+  const last = dates[6];
+  const sameMonth = first.getMonth() === last.getMonth();
+
+  let title;
+  if (sameMonth) {
+    title = `<em>${first.getDate()} — ${last.getDate()}</em> ${MONTHS[first.getMonth()]} ${first.getFullYear()}`;
+  } else {
+    title = `<em>${first.getDate()} ${MONTHS[first.getMonth()].slice(0, 3)}</em> — <em>${last.getDate()} ${MONTHS[last.getMonth()].slice(0, 3)}</em> ${last.getFullYear()}`;
+  }
+  document.getElementById('week-title').innerHTML = title;
 }
 
-function renderCalendar() {
-  const firstDay    = new Date(state.year, state.month, 1).getDay();
-  const daysInMonth = new Date(state.year, state.month+1, 0).getDate();
-  const today       = new Date();
-  const todayStr    = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-
-  document.getElementById('month-title').innerHTML = `<em>${MONTHS[state.month]}</em> ${state.year}`;
-
+function renderGrid() {
+  const dates = getWeekDates(state.weekStart);
+  const today = todayStr();
   let html = '';
-  for (let i=0; i<firstDay; i++) html += `<div class="cal-cell empty"></div>`;
 
-  for (let d=1; d<=daysInMonth; d++) {
-    const dateStr   = `${state.year}-${String(state.month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dayShifts = state.shifts.filter(s => s.date === dateStr);
-    const isToday   = dateStr === todayStr;
-    const dow       = new Date(state.year, state.month, d).getDay();
-    const isWeekend = dow===0 || dow===6;
+  // Header row: corner + 7 days
+  html += '<div class="grid-corner"></div>';
+  dates.forEach(d => {
+    const ds = dateToStr(d);
+    const isToday = ds === today;
+    html += `<div class="grid-day-header${isToday ? ' today' : ''}">
+      <div class="day-name">${DAYS_SHORT[d.getDay()]}</div>
+      <div class="day-number">${d.getDate()}</div>
+    </div>`;
+  });
 
-    let pills = '';
-    const maxPills = 2;
-    let pillCount = 0;
-    dayShifts.forEach(s => {
-      s.collabIds.forEach(cid => {
-        if (pillCount >= maxPills) return;
-        const c = getCollab(cid);
+  // AM row
+  html += '<div class="grid-turno-label turno-am"><div class="turno-badge">AM</div></div>';
+  dates.forEach(d => {
+    const ds = dateToStr(d);
+    const isToday = ds === today;
+    const cellShifts = state.shifts.filter(s => s.date === ds && s.turno === 'AM');
+    html += `<div class="grid-cell${isToday ? ' today-col' : ''}" onclick="openDayDetail('${ds}','AM')">`;
+    if (cellShifts.length) {
+      cellShifts.forEach(s => {
+        const c = getCollab(s.collabId);
         if (!c) return;
-        pills += `<div class="shift-pill" style="background:${c.color.bg};color:${c.color.fg}" onclick="openShiftDetail(event,'${s.id}')">
-          <span class="shift-dot" style="background:${c.color.fg}"></span>${s.activity}
+        html += `<div class="person-card" style="background:${c.color.bg};color:${c.color.fg}">
+          <div class="person-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
+          <div>
+            <div class="person-name">${c.name.split(' ')[0]}</div>
+            <div class="person-roles">${s.rol}</div>
+          </div>
         </div>`;
-        pillCount++;
       });
-    });
-    const totalAssigned = dayShifts.reduce((acc, s) => acc + s.collabIds.length, 0);
-    if (totalAssigned > maxPills) pills += `<div class="more-shifts" onclick="event.stopPropagation()">+${totalAssigned - maxPills} más</div>`;
-
-    html += `<div class="cal-cell${isToday?' today':''}${isWeekend?' weekend-cell':''}" onclick="openAddShift('${dateStr}')">
-      <div class="day-num">${d}</div>${pills}
-    </div>`;
-  }
-  document.getElementById('cal-body').innerHTML = html;
-}
-
-function renderList() {
-  const el = document.getElementById('shift-list-el');
-  const monthShifts = state.shifts
-    .filter(s => { const [y,m] = s.date.split('-').map(Number); return y===state.year && m===(state.month+1); })
-    .sort((a,b) => a.date.localeCompare(b.date));
-
-  if (!monthShifts.length) {
-    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Sin turnos este mes</div><div style="font-size:13px;margin-top:4px">Usa el Sheet para agregar turnos o haz clic en "+ Agregar turno"</div></div>`;
-    return;
-  }
-  el.innerHTML = monthShifts.map(s => {
-    const collabs = s.collabIds.map(id => getCollab(id)).filter(Boolean);
-    if (!collabs.length) return '';
-    const d = new Date(s.date+'T12:00:00');
-    const collabLine = collabs.map(c =>
-      `<span style="display:inline-flex;align-items:center;gap:4px;margin-right:8px">
-        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${c.color.hex}"></span>${c.name}
-      </span>`
-    ).join('');
-    return `<div class="shift-row">
-      <div class="shift-date-badge"><div class="sdb-day">${d.getDate()}</div><div class="sdb-dow">${DAYS_SH[d.getDay()]}</div></div>
-      <div class="shift-info">
-        <div class="shift-act">${s.activity}</div>
-        <div class="shift-collab">${collabLine}</div>
-        ${s.notes ? `<div class="shift-note">${s.notes}</div>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderStats() {
-  const count = state.shifts.filter(s => { const [y,m]=s.date.split('-').map(Number); return y===state.year && m===(state.month+1); }).length;
-  document.getElementById('stat-turnos').textContent = count;
-  document.getElementById('stat-colab').textContent  = state.collaborators.length;
-}
-
-// ============================================================
-//  NAVEGACIÓN
-// ============================================================
-function changeMonth(delta) {
-  state.month += delta;
-  if (state.month < 0)  { state.month = 11; state.year--; }
-  if (state.month > 11) { state.month = 0;  state.year++; }
-  render();
-}
-function goToday() {
-  const now = new Date();
-  state.year = now.getFullYear(); state.month = now.getMonth();
-  render();
-}
-function switchView(v) {
-  state.view = v;
-  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&v==='cal')||(i===1&&v==='list')));
-  document.getElementById('cal-view').classList.toggle('active', v==='cal');
-  document.getElementById('list-view').classList.toggle('active', v==='list');
-  render();
-}
-
-// ============================================================
-//  MODAL — agregar turno
-// ============================================================
-function openAddShift(dateStr) {
-  state.editingDate = dateStr;
-  const dateGroup = document.getElementById('date-group');
-  if (dateStr) {
-    dateGroup.style.display = 'none';
-    const d = new Date(dateStr+'T12:00:00');
-    document.getElementById('modal-date-display').textContent = `${DAYS_SH[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-  } else {
-    dateGroup.style.display = 'block';
-    document.getElementById('modal-date-display').textContent = '';
-    const now = new Date();
-    document.getElementById('shift-date').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-  }
-  document.getElementById('shift-collab').innerHTML = state.collaborators.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  document.getElementById('shift-act').value   = '';
-  document.getElementById('shift-notes').value = '';
-  document.getElementById('saving-indicator').textContent = '';
-  document.getElementById('save-btn').disabled = false;
-  document.getElementById('shift-modal').classList.add('open');
-  setTimeout(() => document.getElementById('shift-act').focus(), 150);
-}
-
-function closeShiftModal(e) {
-  if (!e || e.target === document.getElementById('shift-modal'))
-    document.getElementById('shift-modal').classList.remove('open');
-}
-
-async function saveShift() {
-  const act      = document.getElementById('shift-act').value.trim();
-  const collabId = document.getElementById('shift-collab').value;
-  const notes    = document.getElementById('shift-notes').value.trim();
-  let   date     = state.editingDate || document.getElementById('shift-date').value;
-  if (!act || !date) { document.getElementById('shift-act').focus(); return; }
-
-  const btn = document.getElementById('save-btn');
-  const ind = document.getElementById('saving-indicator');
-  btn.disabled = true;
-  ind.textContent = 'Guardando...';
-
-  const newShift = { id: String(Date.now()), date, activity: act, collabIds: [collabId], notes };
-
-  // Guardar localmente (optimistic update)
-  state.shifts.push(newShift);
-  render();
-
-  // Intentar guardar en Sheets
-  if (API_URL && API_URL !== "TU_URL_AQUI") {
-    try {
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action:'addTurno', fecha:date, actividad:act, colaboradorId:collabId, notas:notes }),
-      });
-      ind.textContent = '✓ Guardado en Google Sheets';
-    } catch {
-      ind.textContent = 'Guardado solo localmente';
+    } else {
+      html += '<div class="empty-cell">—</div>';
     }
-  } else {
-    ind.textContent = 'Guardado en modo demo';
-  }
+    html += '</div>';
+  });
 
-  setTimeout(() => closeShiftModal(), 900);
+  // PM row
+  html += '<div class="grid-turno-label turno-pm"><div class="turno-badge">PM</div></div>';
+  dates.forEach(d => {
+    const ds = dateToStr(d);
+    const isToday = ds === today;
+    const cellShifts = state.shifts.filter(s => s.date === ds && s.turno === 'PM');
+    html += `<div class="grid-cell${isToday ? ' today-col' : ''}" onclick="openDayDetail('${ds}','PM')">`;
+    if (cellShifts.length) {
+      cellShifts.forEach(s => {
+        const c = getCollab(s.collabId);
+        if (!c) return;
+        html += `<div class="person-card" style="background:${c.color.bg};color:${c.color.fg}">
+          <div class="person-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
+          <div>
+            <div class="person-name">${c.name.split(' ')[0]}</div>
+            <div class="person-roles">${s.rol}</div>
+          </div>
+        </div>`;
+      });
+    } else {
+      html += '<div class="empty-cell">—</div>';
+    }
+    html += '</div>';
+  });
+
+  document.getElementById('week-grid').innerHTML = html;
 }
 
-// ============================================================
-//  DETAIL MODAL — ver detalle de un turno
-// ============================================================
-function openShiftDetail(e, shiftId) {
-  e.stopPropagation();
-  const s = state.shifts.find(x => String(x.id) === String(shiftId));
-  if (!s) return;
-  const collabs = s.collabIds.map(id => getCollab(id)).filter(Boolean);
-  if (!collabs.length) return;
-  const d = new Date(s.date + 'T12:00:00');
-  const fechaLarga = `${DAYS_SH[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+function renderTeam() {
+  const section = document.getElementById('team-section');
+  const cards = state.collaborators.map(c => {
+    const thisWeekShifts = getWeekDates(state.weekStart)
+      .map(dateToStr)
+      .flatMap(ds => state.shifts.filter(s => s.date === ds && s.collabId === c.id));
+    const shiftCount = thisWeekShifts.length;
 
-  const avatarsHtml = collabs.map(c =>
-    `<div style="display:flex;align-items:center;gap:10px;margin-bottom:${collabs.length>1?'8px':'0'}">
-      <div class="detail-avatar" style="background:${c.color.hex};width:36px;height:36px;font-size:12px">${initials(c.name)}</div>
-      <div><div class="detail-name" style="font-size:14px">${c.name}</div><div class="detail-role">${c.role}</div></div>
-    </div>`
-  ).join('');
-
-  document.getElementById('detail-header').innerHTML = `<div style="width:100%">${avatarsHtml}</div>`;
-
-  const firstC = collabs[0];
-  document.getElementById('detail-fields').innerHTML = `
-    <div class="detail-field">
-      <div class="detail-label">Actividad</div>
-      <div class="detail-value">
-        <span class="detail-activity-pill" style="background:${firstC.color.bg};color:${firstC.color.fg}">
-          <span style="width:7px;height:7px;border-radius:50%;background:${firstC.color.fg};display:inline-block"></span>
-          ${s.activity}
-        </span>
-      </div>
-    </div>
-    <div class="detail-field">
-      <div class="detail-label">Fecha</div>
-      <div class="detail-value">${fechaLarga}</div>
-    </div>
-    ${s.notes ? `<div class="detail-field">
-      <div class="detail-label">Notas</div>
-      <div class="detail-value">${s.notes}</div>
-    </div>` : ''}`;
-
-  document.getElementById('detail-modal').classList.add('open');
-}
-
-function closeDetailModal(e) {
-  if (!e || e.target === document.getElementById('detail-modal'))
-    document.getElementById('detail-modal').classList.remove('open');
-}
-
-// ============================================================
-//  PRÓXIMOS EVENTOS
-// ============================================================
-function renderProximos() {
-  const section = document.getElementById('proximos-section');
-  if (!section) return;
-
-  const todayStr = (() => {
-    const n = new Date();
-    return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
-  })();
-
-  // Solo turnos desde hoy en adelante, máximo 30 días, máx 6
-  const upcoming = state.shifts
-    .filter(s => s.date >= todayStr)
-    .sort((a,b) => a.date.localeCompare(b.date))
-    .slice(0, 6);
-
-  if (!upcoming.length) {
-    section.innerHTML = `
-      <div class="proximos-title">Próximos eventos <span>— ninguno agendado</span></div>
-      <div class="proximo-empty">No hay turnos próximos. Agrega uno desde el calendario.</div>`;
-    return;
-  }
-
-  const cards = upcoming.map(s => {
-    const collabs = s.collabIds.map(id => getCollab(id)).filter(Boolean);
-    if (!collabs.length) return '';
-    const firstC = collabs[0];
-    const d = new Date(s.date + 'T12:00:00');
-    const today = new Date(); today.setHours(0,0,0,0);
-    const diffDays = Math.round((d - today) / 86400000);
-    let daysLabel, daysClass;
-    if (diffDays === 0)      { daysLabel = 'Hoy';                 daysClass = 'days-today'; }
-    else if (diffDays === 1) { daysLabel = 'Mañana';              daysClass = 'days-soon'; }
-    else if (diffDays <= 7)  { daysLabel = `En ${diffDays} días`; daysClass = 'days-soon'; }
-    else                     { daysLabel = `${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}`; daysClass = 'days-far'; }
-
-    const collabLine = collabs.map(c =>
-      `<span style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">
-        <span class="proximo-dot" style="background:${c.color.hex}"></span>${c.name}
-      </span>`
+    const roleTags = c.roles.split(',').map(r => r.trim()).filter(Boolean).map(r =>
+      `<span class="role-tag" style="background:${c.color.bg};color:${c.color.fg}">${r}</span>`
     ).join('');
 
-    return `<div class="proximo-card" style="border-left-color:${firstC.color.hex}" onclick="openShiftDetail(event,'${s.id}')">
-      <div class="proximo-date" style="display:flex;align-items:center;justify-content:space-between">
-        <span>${DAYS_SH[d.getDay()]}, ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}</span>
-        <span class="days-away ${daysClass}">${daysLabel}</span>
+    return `<div class="team-card" style="border-left-color:${c.color.hex}">
+      <div class="team-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
+      <div>
+        <div class="team-name">${c.name}</div>
+        <div class="team-roles">${roleTags}</div>
+        <div style="font-size:11px;color:var(--ink-muted);margin-top:4px">${shiftCount} turno${shiftCount !== 1 ? 's' : ''} esta semana</div>
       </div>
-      <div class="proximo-act">${s.activity}</div>
-      <div class="proximo-collab">${collabLine}</div>
     </div>`;
   }).join('');
 
   section.innerHTML = `
-    <div class="proximos-title">Próximos eventos <span>— los más cercanos</span></div>
-    <div class="proximos-list">${cards}</div>`;
+    <div class="section-title">Equipo <span>— ${state.collaborators.length} colaboradores</span></div>
+    <div class="team-grid">${cards}</div>`;
 }
 
 // ============================================================
-//  TECLADO
+//  NAVIGATION
 // ============================================================
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    document.getElementById('shift-modal').classList.remove('open');
+function changeWeek(delta) {
+  const d = new Date(state.weekStart);
+  d.setDate(d.getDate() + delta * 7);
+  state.weekStart = d;
+  render();
+}
+
+function goThisWeek() {
+  state.weekStart = getMonday(new Date());
+  render();
+}
+
+// ============================================================
+//  DETAIL MODAL
+// ============================================================
+function openDayDetail(dateStr, turno) {
+  const shifts = state.shifts.filter(s => s.date === dateStr && s.turno === turno);
+  if (!shifts.length) return;
+
+  const d = new Date(dateStr + 'T12:00:00');
+  const fechaLarga = `${DAYS_FULL[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]}`;
+
+  document.getElementById('modal-title').textContent = `${turno} — ${fechaLarga}`;
+
+  const body = shifts.map(s => {
+    const c = getCollab(s.collabId);
+    if (!c) return '';
+    return `<div class="detail-field">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="person-avatar" style="background:${c.color.hex};width:30px;height:30px;font-size:10px">${initials(c.name)}</div>
+        <div>
+          <div style="font-weight:500;font-size:14px">${c.name}</div>
+          <div style="font-size:12px;color:var(--ink-muted)">${s.rol}</div>
+          ${s.notas ? `<div style="font-size:12px;color:var(--ink-muted);font-style:italic;margin-top:2px">${s.notas}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function closeModal(e) {
+  if (!e || e.target === document.getElementById('detail-modal'))
     document.getElementById('detail-modal').classList.remove('open');
-  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.getElementById('detail-modal').classList.remove('open');
 });
 
 // ============================================================
-//  UTILIDAD — normaliza cualquier formato de fecha a YYYY-MM-DD
-// ============================================================
-function normalizeDate(raw) {
-  if (!raw) return '';
-  // Ya está en formato correcto
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-  // Formato M/D/YYYY o MM/DD/YYYY (Google Sheets en inglés)
-  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)) {
-    const [m, d, y] = raw.split('/');
-    return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-  }
-  // Formato D/M/YYYY (Google Sheets en español)
-  if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(raw)) {
-    const [d, m, y] = raw.split('-');
-    return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-  }
-  // Intentar parsear como Date genérico
-  try {
-    const d = new Date(raw);
-    if (!isNaN(d)) {
-      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    }
-  } catch(e) {}
-  return raw;
-}
-
-// ============================================================
-//  ARRANQUE
+//  START
 // ============================================================
 init();
 </script>
