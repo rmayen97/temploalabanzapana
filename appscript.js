@@ -1,66 +1,86 @@
 // ============================================================
 //  Google Apps Script — Turnos Templo Alabanza Panamá
 //
+//  HOJAS REQUERIDAS EN EL SHEET:
+//
+//  1. "Colaboradores":  id | nombre | roles | color
+//  2. "Turnos":         id | fecha | turno | colaboradorId | rol | notas
+//  3. "Ausencias":      id | fecha | colaboradorId | turno | motivo | fechaReporte
+//
 //  INSTRUCCIONES:
 //  1. Abre tu Google Sheet
-//  2. Ve a Extensiones > Apps Script
-//  3. Borra el contenido y pega este código
-//  4. Haz clic en "Implementar" > "Nueva implementación"
-//  5. Tipo: "Aplicación web"
-//  6. Ejecutar como: "Yo"
-//  7. Quién tiene acceso: "Cualquier persona"
-//  8. Copia la URL generada y pégala en API_URL del index.html
-//
-//  ESTRUCTURA DEL SHEET:
-//
-//  Hoja "Colaboradores":
-//  | id | nombre          | roles              | color   |
-//  | 1  | Rodrigo Mayén   | Guitarra, Cantante | #16A34A |
-//  | 2  | Sam Castro      | Guitarra           | #ff0000 |
-//
-//  Hoja "Turnos":
-//  | id | fecha      | turno | colaboradorId | rol               | notas            |
-//  | 1  | 2026-04-21 | AM    | 1             | Cantante          |                  |
-//  | 2  | 2026-04-21 | PM    | 1             | Guitarra, Cantante| Servicio especial|
+//  2. Crea la hoja "Ausencias" con las columnas de arriba
+//  3. Ve a Extensiones > Apps Script
+//  4. Reemplaza el código con este
+//  5. Implementar > Nueva implementación > Aplicación web
+//  6. Ejecutar como: "Yo" | Acceso: "Cualquier persona"
+//  7. Copia la nueva URL y actualízala en index.html
 // ============================================================
 
 function doGet(e) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   // --- Colaboradores ---
-  const colabSheet = ss.getSheetByName('Colaboradores');
-  const colabData = colabSheet.getDataRange().getValues();
-  const colaboradores = colabData.slice(1).filter(row => row[0]).map(row => ({
-    id:     String(row[0]),
-    nombre: row[1],
-    roles:  row[2] || '',
-    color:  row[3] || '#64748B',
-  }));
+  var colabSheet = ss.getSheetByName('Colaboradores');
+  var colabData = colabSheet.getDataRange().getValues();
+  var colaboradores = [];
+  for (var i = 1; i < colabData.length; i++) {
+    var row = colabData[i];
+    if (!row[0]) continue;
+    colaboradores.push({
+      id:     String(row[0]),
+      nombre: row[1],
+      roles:  row[2] || '',
+      color:  row[3] || '#64748B',
+    });
+  }
 
   // --- Turnos ---
-  const turnosSheet = ss.getSheetByName('Turnos');
-  const turnosData = turnosSheet.getDataRange().getValues();
-  const turnos = turnosData.slice(1).filter(row => row[0]).map(row => ({
-    id:             String(row[0]),
-    fecha:          formatDate(row[1]),
-    turno:          (row[2] || 'AM').toString().toUpperCase(),
-    colaboradorId:  String(row[3]),
-    rol:            row[4] || '',
-    notas:          row[5] || '',
-  }));
+  var turnosSheet = ss.getSheetByName('Turnos');
+  var turnosData = turnosSheet.getDataRange().getValues();
+  var turnos = [];
+  for (var i = 1; i < turnosData.length; i++) {
+    var row = turnosData[i];
+    if (!row[0]) continue;
+    turnos.push({
+      id:             String(row[0]),
+      fecha:          formatDate(row[1]),
+      turno:          (row[2] || 'AM').toString().toUpperCase(),
+      colaboradorId:  String(row[3]),
+      rol:            row[4] || '',
+      notas:          row[5] || '',
+    });
+  }
 
-  const output = JSON.stringify({ colaboradores, turnos });
+  // --- Ausencias ---
+  var ausencias = [];
+  var ausSheet = ss.getSheetByName('Ausencias');
+  if (ausSheet) {
+    var ausData = ausSheet.getDataRange().getValues();
+    for (var i = 1; i < ausData.length; i++) {
+      var row = ausData[i];
+      if (!row[0]) continue;
+      ausencias.push({
+        id:             String(row[0]),
+        fecha:          formatDate(row[1]),
+        colaboradorId:  String(row[2]),
+        turno:          row[3] || 'Ambos',
+        motivo:         row[4] || '',
+      });
+    }
+  }
+
+  var output = JSON.stringify({ colaboradores: colaboradores, turnos: turnos, ausencias: ausencias });
   return ContentService.createTextOutput(output).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-  const data = JSON.parse(e.postData.contents);
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  var data = JSON.parse(e.postData.contents);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   if (data.action === 'addTurno') {
-    const sheet = ss.getSheetByName('Turnos');
-    const lastRow = sheet.getLastRow();
-    const newId = lastRow;
+    var sheet = ss.getSheetByName('Turnos');
+    var newId = sheet.getLastRow();
     sheet.appendRow([
       newId,
       data.fecha,
@@ -74,6 +94,30 @@ function doPost(e) {
     ).setMimeType(ContentService.MimeType.JSON);
   }
 
+  if (data.action === 'addAusencia') {
+    var sheet = ss.getSheetByName('Ausencias');
+    if (!sheet) {
+      sheet = ss.insertSheet('Ausencias');
+      sheet.appendRow(['id', 'fecha', 'colaboradorId', 'turno', 'motivo', 'fechaReporte']);
+    }
+    var newId = sheet.getLastRow();
+    var now = new Date();
+    var fechaReporte = now.getFullYear() + '-' +
+      String(now.getMonth() + 1).padStart(2, '0') + '-' +
+      String(now.getDate()).padStart(2, '0');
+    sheet.appendRow([
+      newId,
+      data.fecha,
+      data.colaboradorId,
+      data.turno || 'Ambos',
+      data.motivo || '',
+      fechaReporte
+    ]);
+    return ContentService.createTextOutput(
+      JSON.stringify({ success: true, id: newId })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
   return ContentService.createTextOutput(
     JSON.stringify({ error: 'Acción no reconocida' })
   ).setMimeType(ContentService.MimeType.JSON);
@@ -81,9 +125,9 @@ function doPost(e) {
 
 function formatDate(value) {
   if (value instanceof Date) {
-    const y = value.getFullYear();
-    const m = String(value.getMonth() + 1).padStart(2, '0');
-    const d = String(value.getDate()).padStart(2, '0');
+    var y = value.getFullYear();
+    var m = String(value.getMonth() + 1).padStart(2, '0');
+    var d = String(value.getDate()).padStart(2, '0');
     return y + '-' + m + '-' + d;
   }
   return String(value);

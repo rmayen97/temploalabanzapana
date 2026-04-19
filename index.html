@@ -12,6 +12,7 @@
     --ink-muted: #78716C; --forest: #1B5E4B; --forest-light: #D1EAE3;
     --amber: #D97706; --amber-light: #FEF3C7;
     --blue: #2563EB; --blue-light: #DBEAFE;
+    --red: #DC2626; --red-light: #FEE2E2;
     --border: rgba(28,25,23,0.12); --radius: 12px;
     --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.08);
   }
@@ -22,6 +23,10 @@
   .header-brand { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
   .header-brand span { color: #86EFAC; }
   .header-sub { font-family: 'DM Sans', sans-serif; font-size: 11px; color: rgba(247,244,238,0.5); font-weight: 400; }
+  .header-nav { display: flex; gap: 4px; }
+  .tab-btn { background: none; border: none; color: rgba(247,244,238,0.5); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
+  .tab-btn.active { background: rgba(247,244,238,0.12); color: var(--cream); }
+  .tab-btn:hover:not(.active) { color: rgba(247,244,238,0.8); }
 
   /* LOADER */
   .loader-overlay { position: fixed; inset: 0; background: var(--cream); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: opacity 0.3s; }
@@ -34,16 +39,17 @@
   .error-banner { background: #FEF2F2; border: 1px solid #FECACA; border-radius: 10px; padding: 14px 18px; margin: 1rem 1.5rem; font-size: 13px; color: #B91C1C; display: none; }
   .error-banner.show { display: block; }
   .config-banner { background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 10px; padding: 14px 18px; margin: 1rem 1.5rem; font-size: 13px; color: #92400E; display: none; }
-  .config-banner code { background: rgba(0,0,0,0.08); padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; }
 
   /* LAYOUT */
   .app { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+  .view-panel { display: none; }
+  .view-panel.active { display: block; }
 
-  /* WEEK NAV */
-  .week-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px; }
-  .week-title { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 300; letter-spacing: -0.5px; }
-  .week-title em { font-style: italic; color: var(--forest); }
-  .week-controls { display: flex; gap: 8px; align-items: center; }
+  /* NAV BAR (shared) */
+  .nav-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 12px; }
+  .nav-title { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 300; letter-spacing: -0.5px; }
+  .nav-title em { font-style: italic; color: var(--forest); }
+  .nav-controls { display: flex; gap: 8px; align-items: center; }
   .nav-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: white; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.12s; color: var(--ink-soft); }
   .nav-btn:hover { background: var(--ink); color: white; border-color: var(--ink); }
   .today-btn { background: white; border: 1px solid var(--border); padding: 6px 14px; border-radius: 8px; font-size: 13px; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--ink-soft); transition: all 0.12s; }
@@ -51,7 +57,6 @@
 
   /* WEEKLY GRID */
   .week-grid { display: grid; grid-template-columns: 60px repeat(7, 1fr); background: white; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
-
   .grid-corner { background: var(--cream); border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); }
   .grid-day-header { text-align: center; padding: 12px 4px; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); background: var(--cream); }
   .grid-day-header:last-child { border-right: none; }
@@ -59,12 +64,10 @@
   .day-name { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
   .day-number { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; margin-top: 2px; }
   .grid-day-header.today .day-number { background: var(--forest); color: white; width: 30px; height: 30px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; }
-
   .grid-turno-label { display: flex; align-items: center; justify-content: center; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 8px; min-height: 100px; }
   .turno-badge { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px; }
   .turno-am .turno-badge { background: var(--amber-light); color: var(--amber); }
   .turno-pm .turno-badge { background: var(--blue-light); color: var(--blue); }
-
   .grid-cell { padding: 8px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 100px; display: flex; flex-direction: column; gap: 4px; }
   .grid-cell:nth-child(8n) { border-right: none; }
   .grid-cell.today-col { background: #FAFFF8; }
@@ -76,6 +79,24 @@
   .person-avatar { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: white; flex-shrink: 0; }
   .person-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .person-roles { font-size: 10px; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .empty-cell { color: var(--ink-muted); font-size: 11px; font-style: italic; opacity: 0.5; margin: auto; }
+
+  /* PRÓXIMO SERVICIO */
+  .next-service { margin-top: 1.5rem; background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .next-service-header { background: var(--forest); color: white; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .next-service-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; }
+  .next-service-date { font-size: 13px; opacity: 0.8; }
+  .next-service-body { display: grid; grid-template-columns: 1fr 1fr; }
+  .next-service-col { padding: 16px 20px; }
+  .next-service-col:first-child { border-right: 1px solid var(--border); }
+  .next-service-col-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .next-service-col-title.am { color: var(--amber); }
+  .next-service-col-title.pm { color: var(--blue); }
+  .ns-person { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+  .ns-person-info { flex: 1; }
+  .ns-person-name { font-weight: 500; font-size: 13px; }
+  .ns-person-role { font-size: 11px; color: var(--ink-muted); }
+  .next-service-empty { padding: 2rem; text-align: center; color: var(--ink-muted); font-size: 13px; }
 
   /* TEAM PANEL */
   .team-section { margin-top: 1.5rem; }
@@ -88,10 +109,51 @@
   .team-roles { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
   .role-tag { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 11px; margin-right: 4px; margin-top: 2px; }
 
-  /* EMPTY STATE */
-  .empty-cell { color: var(--ink-muted); font-size: 11px; font-style: italic; opacity: 0.5; margin: auto; }
+  /* MONTHLY CALENDAR */
+  .cal-grid { background: white; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+  .cal-header { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--border); background: var(--cream); }
+  .cal-dow { text-align: center; padding: 10px 0; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+  .cal-body { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .cal-cell { min-height: 90px; padding: 8px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; position: relative; }
+  .cal-cell:nth-child(7n) { border-right: none; }
+  .cal-cell:hover:not(.empty) { background: #FAFAF9; }
+  .cal-cell.empty { background: var(--cream); opacity: 0.5; cursor: default; }
+  .cal-cell.today { background: #F0FDF4; }
+  .cal-cell.today .cal-day-num { background: var(--forest); color: white; }
+  .cal-day-num { font-size: 12px; font-weight: 500; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-bottom: 4px; color: var(--ink-soft); }
+  .cal-shift-pill { display: flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .cal-turno-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
 
-  /* MODAL - shift detail */
+  /* AUSENCIAS */
+  .absence-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .absence-form-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow); }
+  .absence-form-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; margin-bottom: 1.25rem; }
+  .form-group { margin-bottom: 1rem; }
+  .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .form-input, .form-select, .form-textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; background: white; color: var(--ink); outline: none; transition: border 0.12s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--forest); }
+  .form-textarea { resize: vertical; min-height: 60px; }
+  .btn-primary { width: 100%; padding: 10px; background: var(--forest); color: white; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.12s; }
+  .btn-primary:hover { background: #145240; }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .form-msg { font-size: 12px; text-align: center; margin-top: 8px; min-height: 18px; }
+  .form-msg.success { color: #15803D; }
+  .form-msg.error { color: #DC2626; }
+
+  .absence-list-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow); }
+  .absence-list-title { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; margin-bottom: 1.25rem; }
+  .absence-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .absence-item:last-child { border-bottom: none; }
+  .absence-date-badge { text-align: center; min-width: 44px; background: var(--red-light); border-radius: 8px; padding: 6px; }
+  .absence-date-day { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; color: var(--red); line-height: 1; }
+  .absence-date-month { font-size: 9px; color: var(--red); text-transform: uppercase; letter-spacing: 0.05em; }
+  .absence-info { flex: 1; }
+  .absence-person { font-weight: 500; font-size: 13px; }
+  .absence-detail { font-size: 12px; color: var(--ink-muted); }
+  .absence-turno-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 12px; }
+  .absence-empty { text-align: center; padding: 2rem; color: var(--ink-muted); font-size: 13px; }
+
+  /* MODAL */
   .modal-bg { position: fixed; inset: 0; background: rgba(28,25,23,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.18s; }
   .modal-bg.open { opacity: 1; pointer-events: all; }
   .modal { background: white; border-radius: 16px; width: 100%; max-width: 380px; padding: 1.75rem; transform: translateY(12px); transition: transform 0.18s; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
@@ -99,8 +161,6 @@
   .modal-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; }
   .detail-field { display: flex; flex-direction: column; gap: 3px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
   .detail-field:last-of-type { border-bottom: none; }
-  .detail-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
-  .detail-value { font-size: 14px; color: var(--ink); }
   .btn-secondary { padding: 10px 16px; background: none; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; color: var(--ink-soft); transition: background 0.12s; width: 100%; margin-top: 1rem; }
   .btn-secondary:hover { background: var(--cream); }
 
@@ -115,12 +175,16 @@
     .person-roles { display: none; }
     .person-avatar { width: 18px; height: 18px; font-size: 7px; }
     .turno-badge { font-size: 10px; padding: 3px 6px; }
-    .week-title { font-size: 18px; }
+    .nav-title { font-size: 18px; }
     .app { padding: 1rem; }
     .header { padding: 0 1rem; }
     .team-grid { grid-template-columns: 1fr 1fr; }
+    .absence-layout { grid-template-columns: 1fr; }
+    .next-service-body { grid-template-columns: 1fr; }
+    .next-service-col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+    .header-nav { gap: 2px; }
+    .tab-btn { font-size: 12px; padding: 5px 10px; }
   }
-
   @media (max-width: 480px) {
     .week-grid { grid-template-columns: 36px repeat(7, 1fr); }
     .day-name { font-size: 9px; }
@@ -130,52 +194,114 @@
     .person-name { font-size: 9px; }
     .grid-cell { min-height: 56px; gap: 2px; }
     .team-grid { grid-template-columns: 1fr; }
+    .cal-cell { min-height: 65px; padding: 4px; }
   }
 </style>
 </head>
 <body>
 
-<!-- LOADER -->
 <div class="loader-overlay" id="loader">
   <div class="loader-spinner"></div>
   <div class="loader-text">Cargando turnos...</div>
 </div>
 
-<!-- HEADER -->
 <header class="header">
   <div class="header-brand">
     Turnos<span>.</span>
     <div class="header-sub">Templo Alabanza </div>
   </div>
+  <nav class="header-nav">
+    <button class="tab-btn active" onclick="switchView('semanal')">Semanal</button>
+    <button class="tab-btn" onclick="switchView('mensual')">Mensual</button>
+    <button class="tab-btn" onclick="switchView('ausencias')">Ausencias</button>
+  </nav>
 </header>
 
-<!-- BANNERS -->
 <div class="config-banner" id="config-banner">
-  <strong>⚙️ Conecta tu Google Sheet</strong>
-  Abre este archivo, busca la variable <code>API_URL</code> al inicio del script y pega la URL de tu Web App de Google Apps Script.
+  <strong>Conecta tu Google Sheet</strong>
+  Busca la variable API_URL en el script y pega la URL de tu Web App.
 </div>
 <div class="error-banner" id="error-banner">
   <strong>No se pudo conectar con Google Sheets</strong>
-  Usando datos de demostración. Verifica que la URL de la API sea correcta.
+  Usando datos de demostración.
 </div>
 
-<!-- APP -->
 <div class="app">
-  <!-- WEEK NAV -->
-  <div class="week-nav">
-    <div class="week-title" id="week-title"></div>
-    <div class="week-controls">
-      <button class="nav-btn" onclick="changeWeek(-1)">&#8592;</button>
-      <button class="today-btn" onclick="goThisWeek()">Esta semana</button>
-      <button class="nav-btn" onclick="changeWeek(1)">&#8594;</button>
+
+  <!-- ==================== SEMANAL ==================== -->
+  <div class="view-panel active" id="view-semanal">
+    <div class="nav-bar">
+      <div class="nav-title" id="week-title"></div>
+      <div class="nav-controls">
+        <button class="nav-btn" onclick="changeWeek(-1)">&#8592;</button>
+        <button class="today-btn" onclick="goThisWeek()">Esta semana</button>
+        <button class="nav-btn" onclick="changeWeek(1)">&#8594;</button>
+      </div>
+    </div>
+    <div class="week-grid" id="week-grid"></div>
+    <div id="next-service-semanal"></div>
+    <div class="team-section" id="team-section"></div>
+  </div>
+
+  <!-- ==================== MENSUAL ==================== -->
+  <div class="view-panel" id="view-mensual">
+    <div class="nav-bar">
+      <div class="nav-title" id="month-title"></div>
+      <div class="nav-controls">
+        <button class="nav-btn" onclick="changeMonth(-1)">&#8592;</button>
+        <button class="today-btn" onclick="goThisMonth()">Este mes</button>
+        <button class="nav-btn" onclick="changeMonth(1)">&#8594;</button>
+      </div>
+    </div>
+    <div class="cal-grid">
+      <div class="cal-header">
+        <div class="cal-dow">Dom</div><div class="cal-dow">Lun</div><div class="cal-dow">Mar</div>
+        <div class="cal-dow">Mié</div><div class="cal-dow">Jue</div><div class="cal-dow">Vie</div>
+        <div class="cal-dow">Sáb</div>
+      </div>
+      <div class="cal-body" id="cal-body"></div>
+    </div>
+    <div id="next-service-mensual"></div>
+  </div>
+
+  <!-- ==================== AUSENCIAS ==================== -->
+  <div class="view-panel" id="view-ausencias">
+    <div class="nav-bar">
+      <div class="nav-title"><em>Reportar</em> Ausencia</div>
+    </div>
+    <div class="absence-layout">
+      <div class="absence-form-card">
+        <div class="absence-form-title">Nueva ausencia</div>
+        <div class="form-group">
+          <label class="form-label">Colaborador</label>
+          <select class="form-select" id="abs-collab"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha del servicio</label>
+          <input class="form-input" type="date" id="abs-date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Turno</label>
+          <select class="form-select" id="abs-turno">
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+            <option value="Ambos">Ambos (AM y PM)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Motivo <span style="opacity:.5;font-size:11px">(opcional)</span></label>
+          <textarea class="form-textarea" id="abs-motivo" placeholder="ej. Viaje, enfermedad..."></textarea>
+        </div>
+        <button class="btn-primary" id="abs-submit" onclick="submitAbsence()">Reportar ausencia</button>
+        <div class="form-msg" id="abs-msg"></div>
+      </div>
+      <div class="absence-list-card">
+        <div class="absence-list-title">Ausencias reportadas</div>
+        <div id="absence-list"></div>
+      </div>
     </div>
   </div>
 
-  <!-- WEEKLY GRID -->
-  <div class="week-grid" id="week-grid"></div>
-
-  <!-- TEAM -->
-  <div class="team-section" id="team-section"></div>
 </div>
 
 <!-- DETAIL MODAL -->
@@ -188,11 +314,7 @@
 </div>
 
 <script>
-// ============================================================
-//  CONFIGURACIÓN — reemplaza con tu URL de Apps Script
-// ============================================================
-const API_URL = "https://script.google.com/macros/s/AKfycbzvAQkajztuUMo_gyweSi0nUn02o6HApl1iFZUlrb7u_Mx5accPXsuN0m3OlyeKs5BTjA/exec";
-// ============================================================
+const API_URL = "https://script.google.com/macros/s/AKfycbxmVYm7X55bz57YD_a-5QCE4OjCh4Ui2CLv1baGE7KCYG9rbZhnjSinVyHH1-LFGVNYtg/exec";
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAYS_SHORT = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -209,14 +331,27 @@ const COLOR_MAP = [
   { hex:'#64748B', bg:'#F1F5F9', fg:'#475569' },
   { hex:'#ff0000', bg:'#FEE2E2', fg:'#DC2626' },
   { hex:'#169451', bg:'#D1FAE5', fg:'#047857' },
+  { hex:'#DC2626', bg:'#FEE2E2', fg:'#B91C1C' },
+  { hex:'#4F46E5', bg:'#E0E7FF', fg:'#4338CA' },
+  { hex:'#059669', bg:'#D1FAE5', fg:'#047857' },
+  { hex:'#C026D3', bg:'#FAE8FF', fg:'#A21CAF' },
+  { hex:'#0284C7', bg:'#E0F2FE', fg:'#0369A1' },
+  { hex:'#0D9488', bg:'#CCFBF1', fg:'#0F766E' },
 ];
 
 let state = {
+  view: 'semanal',
   weekStart: getMonday(new Date()),
+  calYear: new Date().getFullYear(),
+  calMonth: new Date().getMonth(),
   collaborators: [],
   shifts: [],
+  ausencias: [],
 };
 
+// ============================================================
+//  UTILS
+// ============================================================
 function getMonday(d) {
   const date = new Date(d);
   const day = date.getDay();
@@ -275,6 +410,20 @@ function normalizeDate(raw) {
   return raw;
 }
 
+function getNextSunday() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const ts = todayStr();
+  const upcoming = state.shifts
+    .filter(s => {
+      const d = new Date(s.date + 'T12:00:00');
+      return d.getDay() === 0 && s.date >= ts;
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
+  if (!upcoming.length) return null;
+  return upcoming[0].date;
+}
+
 // ============================================================
 //  INIT
 // ============================================================
@@ -306,6 +455,16 @@ async function init() {
       rol: t.rol || '',
       notas: t.notas || '',
     }));
+
+    if (data.ausencias) {
+      state.ausencias = data.ausencias.map(a => ({
+        id: String(a.id),
+        date: normalizeDate(a.fecha),
+        collabId: String(a.colaboradorId),
+        turno: a.turno || 'Ambos',
+        motivo: a.motivo || '',
+      }));
+    }
   } catch (err) {
     console.error('API error:', err);
     document.getElementById('error-banner').classList.add('show');
@@ -318,144 +477,137 @@ async function init() {
 
 function loadDemoData() {
   state.collaborators = [
-    { id: '1', name: 'Rodrigo Mayén', roles: 'Guitarra, Cantante', color: colorFromHex('#16A34A') },
-    { id: '2', name: 'Sam Castro', roles: 'Guitarra', color: colorFromHex('#ff0000') },
-    { id: '3', name: 'Raquel Orellana', roles: 'Micrófono', color: colorFromHex('#169451') },
-    { id: '4', name: 'Ana García', roles: 'Teclado, Cantante', color: colorFromHex('#2563EB') },
-    { id: '5', name: 'Carlos López', roles: 'Bajo', color: colorFromHex('#DB2777') },
-    { id: '6', name: 'María Torres', roles: 'Batería', color: colorFromHex('#D97706') },
-    { id: '7', name: 'José Pérez', roles: 'Cantante', color: colorFromHex('#8B5CF6') },
-    { id: '8', name: 'Laura Díaz', roles: 'Micrófono, Cantante', color: colorFromHex('#EA580C') },
+    { id:'1', name:'Will Deads',       roles:'Guitarra, Voz Lead', color: colorFromHex('#16A34A') },
+    { id:'2', name:'Sherly Larios',    roles:'Voz de Apoyo',       color: colorFromHex('#2563EB') },
+    { id:'3', name:'Jonathan Castro',   roles:'Percusión',          color: colorFromHex('#DB2777') },
+    { id:'4', name:'Sam Castro',        roles:'Bajo',               color: colorFromHex('#D97706') },
+    { id:'5', name:'Herdy de León',     roles:'Voz Lead',           color: colorFromHex('#8B5CF6') },
+    { id:'6', name:'Pablo de la Cruz',  roles:'Voz de Apoyo',       color: colorFromHex('#EA580C') },
+    { id:'7', name:'Rodrigo Mayén',     roles:'Guitarra',           color: colorFromHex('#06B6D4') },
   ];
 
   const now = new Date();
-  const mon = getMonday(now);
-  const dates = getWeekDates(mon).map(dateToStr);
+  const sunday = new Date(now);
+  sunday.setDate(sunday.getDate() + (7 - sunday.getDay()) % 7);
+  if (sunday < now) sunday.setDate(sunday.getDate() + 7);
+  const ds = dateToStr(sunday);
+
+  const nextSun = new Date(sunday);
+  nextSun.setDate(nextSun.getDate() + 7);
+  const ds2 = dateToStr(nextSun);
 
   state.shifts = [
-    { id: 's1', date: dates[0], turno: 'AM', collabId: '1', rol: 'Cantante', notas: '' },
-    { id: 's2', date: dates[0], turno: 'AM', collabId: '2', rol: 'Guitarra', notas: '' },
-    { id: 's3', date: dates[0], turno: 'AM', collabId: '4', rol: 'Teclado', notas: '' },
-    { id: 's4', date: dates[0], turno: 'AM', collabId: '7', rol: 'Cantante', notas: '' },
-    { id: 's5', date: dates[0], turno: 'PM', collabId: '1', rol: 'Guitarra, Cantante', notas: '' },
-    { id: 's6', date: dates[0], turno: 'PM', collabId: '5', rol: 'Bajo', notas: '' },
-    { id: 's7', date: dates[0], turno: 'PM', collabId: '6', rol: 'Batería', notas: '' },
-    { id: 's8', date: dates[0], turno: 'PM', collabId: '8', rol: 'Cantante', notas: '' },
+    { id:'s1', date:ds, turno:'AM', collabId:'1', rol:'Guitarra, Voz Lead', notas:'' },
+    { id:'s2', date:ds, turno:'AM', collabId:'2', rol:'Voz de Apoyo',       notas:'' },
+    { id:'s3', date:ds, turno:'AM', collabId:'3', rol:'Percusión',          notas:'' },
+    { id:'s4', date:ds, turno:'AM', collabId:'4', rol:'Bajo',               notas:'' },
+    { id:'s5', date:ds, turno:'PM', collabId:'5', rol:'Voz Lead',           notas:'' },
+    { id:'s6', date:ds, turno:'PM', collabId:'6', rol:'Voz de Apoyo',       notas:'' },
+    { id:'s7', date:ds, turno:'PM', collabId:'7', rol:'Guitarra',           notas:'' },
+    { id:'s8', date:ds, turno:'PM', collabId:'4', rol:'Bajo',               notas:'' },
 
-    { id: 's9',  date: dates[2], turno: 'AM', collabId: '1', rol: 'Guitarra', notas: '' },
-    { id: 's10', date: dates[2], turno: 'AM', collabId: '3', rol: 'Micrófono', notas: '' },
-    { id: 's11', date: dates[2], turno: 'AM', collabId: '5', rol: 'Bajo', notas: '' },
-    { id: 's12', date: dates[2], turno: 'AM', collabId: '7', rol: 'Cantante', notas: '' },
-    { id: 's13', date: dates[2], turno: 'PM', collabId: '2', rol: 'Guitarra', notas: '' },
-    { id: 's14', date: dates[2], turno: 'PM', collabId: '4', rol: 'Cantante', notas: '' },
-    { id: 's15', date: dates[2], turno: 'PM', collabId: '6', rol: 'Batería', notas: '' },
-    { id: 's16', date: dates[2], turno: 'PM', collabId: '8', rol: 'Micrófono', notas: '' },
-
-    { id: 's17', date: dates[4], turno: 'AM', collabId: '3', rol: 'Micrófono', notas: '' },
-    { id: 's18', date: dates[4], turno: 'AM', collabId: '4', rol: 'Teclado, Cantante', notas: '' },
-    { id: 's19', date: dates[4], turno: 'PM', collabId: '1', rol: 'Guitarra', notas: '' },
-    { id: 's20', date: dates[4], turno: 'PM', collabId: '5', rol: 'Bajo', notas: '' },
-    { id: 's21', date: dates[4], turno: 'PM', collabId: '7', rol: 'Cantante', notas: '' },
-
-    { id: 's22', date: dates[6], turno: 'AM', collabId: '1', rol: 'Cantante', notas: 'Servicio dominical' },
-    { id: 's23', date: dates[6], turno: 'AM', collabId: '2', rol: 'Guitarra', notas: 'Servicio dominical' },
-    { id: 's24', date: dates[6], turno: 'AM', collabId: '3', rol: 'Micrófono', notas: '' },
-    { id: 's25', date: dates[6], turno: 'AM', collabId: '4', rol: 'Teclado', notas: '' },
-    { id: 's26', date: dates[6], turno: 'PM', collabId: '5', rol: 'Bajo', notas: '' },
-    { id: 's27', date: dates[6], turno: 'PM', collabId: '6', rol: 'Batería', notas: '' },
-    { id: 's28', date: dates[6], turno: 'PM', collabId: '7', rol: 'Cantante', notas: '' },
-    { id: 's29', date: dates[6], turno: 'PM', collabId: '8', rol: 'Micrófono, Cantante', notas: '' },
+    { id:'s9',  date:ds2, turno:'AM', collabId:'1', rol:'Guitarra, Voz Lead', notas:'' },
+    { id:'s10', date:ds2, turno:'AM', collabId:'2', rol:'Voz de Apoyo',       notas:'' },
+    { id:'s11', date:ds2, turno:'AM', collabId:'3', rol:'Percusión',          notas:'' },
+    { id:'s12', date:ds2, turno:'AM', collabId:'4', rol:'Bajo',               notas:'' },
+    { id:'s13', date:ds2, turno:'PM', collabId:'5', rol:'Voz Lead',           notas:'' },
+    { id:'s14', date:ds2, turno:'PM', collabId:'6', rol:'Voz de Apoyo',       notas:'' },
+    { id:'s15', date:ds2, turno:'PM', collabId:'7', rol:'Guitarra',           notas:'' },
+    { id:'s16', date:ds2, turno:'PM', collabId:'4', rol:'Bajo',               notas:'' },
   ];
+
+  state.ausencias = [
+    { id:'a1', date:ds, collabId:'3', turno:'AM', motivo:'Viaje familiar' },
+  ];
+}
+
+// ============================================================
+//  VIEW SWITCHING
+// ============================================================
+function switchView(v) {
+  state.view = v;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.toLowerCase() === v) b.classList.add('active');
+  });
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  render();
 }
 
 // ============================================================
 //  RENDER
 // ============================================================
 function render() {
-  renderWeekTitle();
-  renderGrid();
-  renderTeam();
+  if (state.view === 'semanal') {
+    renderWeekTitle();
+    renderWeekGrid();
+    renderNextService('next-service-semanal');
+    renderTeam();
+  } else if (state.view === 'mensual') {
+    renderMonthTitle();
+    renderCalendar();
+    renderNextService('next-service-mensual');
+  } else if (state.view === 'ausencias') {
+    renderAbsenceForm();
+    renderAbsenceList();
+  }
 }
 
+// ============================================================
+//  SEMANAL
+// ============================================================
 function renderWeekTitle() {
   const dates = getWeekDates(state.weekStart);
-  const first = dates[0];
-  const last = dates[6];
+  const first = dates[0], last = dates[6];
   const sameMonth = first.getMonth() === last.getMonth();
-
   let title;
   if (sameMonth) {
     title = `<em>${first.getDate()} — ${last.getDate()}</em> ${MONTHS[first.getMonth()]} ${first.getFullYear()}`;
   } else {
-    title = `<em>${first.getDate()} ${MONTHS[first.getMonth()].slice(0, 3)}</em> — <em>${last.getDate()} ${MONTHS[last.getMonth()].slice(0, 3)}</em> ${last.getFullYear()}`;
+    title = `<em>${first.getDate()} ${MONTHS[first.getMonth()].slice(0,3)}</em> — <em>${last.getDate()} ${MONTHS[last.getMonth()].slice(0,3)}</em> ${last.getFullYear()}`;
   }
   document.getElementById('week-title').innerHTML = title;
 }
 
-function renderGrid() {
+function renderWeekGrid() {
   const dates = getWeekDates(state.weekStart);
   const today = todayStr();
   let html = '';
 
-  // Header row: corner + 7 days
   html += '<div class="grid-corner"></div>';
   dates.forEach(d => {
     const ds = dateToStr(d);
-    const isToday = ds === today;
-    html += `<div class="grid-day-header${isToday ? ' today' : ''}">
+    html += `<div class="grid-day-header${ds === today ? ' today' : ''}">
       <div class="day-name">${DAYS_SHORT[d.getDay()]}</div>
       <div class="day-number">${d.getDate()}</div>
     </div>`;
   });
 
-  // AM row
-  html += '<div class="grid-turno-label turno-am"><div class="turno-badge">AM</div></div>';
-  dates.forEach(d => {
-    const ds = dateToStr(d);
-    const isToday = ds === today;
-    const cellShifts = state.shifts.filter(s => s.date === ds && s.turno === 'AM');
-    html += `<div class="grid-cell${isToday ? ' today-col' : ''}" onclick="openDayDetail('${ds}','AM')">`;
-    if (cellShifts.length) {
-      cellShifts.forEach(s => {
-        const c = getCollab(s.collabId);
-        if (!c) return;
-        html += `<div class="person-card" style="background:${c.color.bg};color:${c.color.fg}">
-          <div class="person-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
-          <div>
-            <div class="person-name">${c.name.split(' ')[0]}</div>
-            <div class="person-roles">${s.rol}</div>
-          </div>
-        </div>`;
-      });
-    } else {
-      html += '<div class="empty-cell">—</div>';
-    }
-    html += '</div>';
-  });
-
-  // PM row
-  html += '<div class="grid-turno-label turno-pm"><div class="turno-badge">PM</div></div>';
-  dates.forEach(d => {
-    const ds = dateToStr(d);
-    const isToday = ds === today;
-    const cellShifts = state.shifts.filter(s => s.date === ds && s.turno === 'PM');
-    html += `<div class="grid-cell${isToday ? ' today-col' : ''}" onclick="openDayDetail('${ds}','PM')">`;
-    if (cellShifts.length) {
-      cellShifts.forEach(s => {
-        const c = getCollab(s.collabId);
-        if (!c) return;
-        html += `<div class="person-card" style="background:${c.color.bg};color:${c.color.fg}">
-          <div class="person-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
-          <div>
-            <div class="person-name">${c.name.split(' ')[0]}</div>
-            <div class="person-roles">${s.rol}</div>
-          </div>
-        </div>`;
-      });
-    } else {
-      html += '<div class="empty-cell">—</div>';
-    }
-    html += '</div>';
+  ['AM', 'PM'].forEach(turno => {
+    html += `<div class="grid-turno-label turno-${turno.toLowerCase()}"><div class="turno-badge">${turno}</div></div>`;
+    dates.forEach(d => {
+      const ds = dateToStr(d);
+      const cellShifts = state.shifts.filter(s => s.date === ds && s.turno === turno);
+      html += `<div class="grid-cell${ds === today ? ' today-col' : ''}" onclick="openDayDetail('${ds}','${turno}')">`;
+      if (cellShifts.length) {
+        cellShifts.forEach(s => {
+          const c = getCollab(s.collabId);
+          if (!c) return;
+          const isAbsent = state.ausencias.some(a => a.date === ds && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos'));
+          html += `<div class="person-card" style="background:${isAbsent ? 'var(--red-light)' : c.color.bg};color:${isAbsent ? 'var(--red)' : c.color.fg};${isAbsent ? 'text-decoration:line-through;opacity:0.7' : ''}">
+            <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex}">${initials(c.name)}</div>
+            <div>
+              <div class="person-name">${c.name.split(' ')[0]}</div>
+              <div class="person-roles">${s.rol}</div>
+            </div>
+          </div>`;
+        });
+      } else {
+        html += '<div class="empty-cell">—</div>';
+      }
+      html += '</div>';
+    });
   });
 
   document.getElementById('week-grid').innerHTML = html;
@@ -464,15 +616,11 @@ function renderGrid() {
 function renderTeam() {
   const section = document.getElementById('team-section');
   const cards = state.collaborators.map(c => {
-    const thisWeekShifts = getWeekDates(state.weekStart)
-      .map(dateToStr)
-      .flatMap(ds => state.shifts.filter(s => s.date === ds && s.collabId === c.id));
-    const shiftCount = thisWeekShifts.length;
-
+    const weekDates = getWeekDates(state.weekStart).map(dateToStr);
+    const shiftCount = weekDates.flatMap(ds => state.shifts.filter(s => s.date === ds && s.collabId === c.id)).length;
     const roleTags = c.roles.split(',').map(r => r.trim()).filter(Boolean).map(r =>
       `<span class="role-tag" style="background:${c.color.bg};color:${c.color.fg}">${r}</span>`
     ).join('');
-
     return `<div class="team-card" style="border-left-color:${c.color.hex}">
       <div class="team-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
       <div>
@@ -482,15 +630,11 @@ function renderTeam() {
       </div>
     </div>`;
   }).join('');
-
   section.innerHTML = `
     <div class="section-title">Equipo <span>— ${state.collaborators.length} colaboradores</span></div>
     <div class="team-grid">${cards}</div>`;
 }
 
-// ============================================================
-//  NAVIGATION
-// ============================================================
 function changeWeek(delta) {
   const d = new Date(state.weekStart);
   d.setDate(d.getDate() + delta * 7);
@@ -504,6 +648,232 @@ function goThisWeek() {
 }
 
 // ============================================================
+//  MENSUAL
+// ============================================================
+function renderMonthTitle() {
+  document.getElementById('month-title').innerHTML = `<em>${MONTHS[state.calMonth]}</em> ${state.calYear}`;
+}
+
+function renderCalendar() {
+  const firstDay = new Date(state.calYear, state.calMonth, 1).getDay();
+  const daysInMonth = new Date(state.calYear, state.calMonth + 1, 0).getDate();
+  const today = todayStr();
+  let html = '';
+
+  for (let i = 0; i < firstDay; i++) html += '<div class="cal-cell empty"></div>';
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${state.calYear}-${String(state.calMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const isToday = ds === today;
+    const amShifts = state.shifts.filter(s => s.date === ds && s.turno === 'AM');
+    const pmShifts = state.shifts.filter(s => s.date === ds && s.turno === 'PM');
+
+    html += `<div class="cal-cell${isToday ? ' today' : ''}" onclick="openDayDetail('${ds}', amShifts.length ? 'AM' : 'PM')">`;
+    html += `<div class="cal-day-num">${d}</div>`;
+
+    if (amShifts.length) {
+      html += `<div class="cal-shift-pill" style="background:var(--amber-light);color:var(--amber)" onclick="event.stopPropagation();openDayDetail('${ds}','AM')">
+        <span class="cal-turno-dot" style="background:var(--amber)"></span>AM · ${amShifts.length}
+      </div>`;
+    }
+    if (pmShifts.length) {
+      html += `<div class="cal-shift-pill" style="background:var(--blue-light);color:var(--blue)" onclick="event.stopPropagation();openDayDetail('${ds}','PM')">
+        <span class="cal-turno-dot" style="background:var(--blue)"></span>PM · ${pmShifts.length}
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  document.getElementById('cal-body').innerHTML = html;
+}
+
+function changeMonth(delta) {
+  state.calMonth += delta;
+  if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; }
+  if (state.calMonth > 11) { state.calMonth = 0; state.calYear++; }
+  render();
+}
+
+function goThisMonth() {
+  state.calYear = new Date().getFullYear();
+  state.calMonth = new Date().getMonth();
+  render();
+}
+
+// ============================================================
+//  PRÓXIMO SERVICIO
+// ============================================================
+function renderNextService(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const nextDate = getNextSunday();
+  if (!nextDate) {
+    container.innerHTML = `<div class="next-service" style="margin-top:1.5rem">
+      <div class="next-service-header">
+        <div class="next-service-title">Próximo Servicio</div>
+      </div>
+      <div class="next-service-empty">No hay servicios programados próximamente.</div>
+    </div>`;
+    return;
+  }
+
+  const d = new Date(nextDate + 'T12:00:00');
+  const fechaStr = `${DAYS_FULL[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]}`;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((d - today) / 86400000);
+  let countdown = '';
+  if (diff === 0) countdown = 'Hoy';
+  else if (diff === 1) countdown = 'Mañana';
+  else countdown = `En ${diff} días`;
+
+  const amShifts = state.shifts.filter(s => s.date === nextDate && s.turno === 'AM');
+  const pmShifts = state.shifts.filter(s => s.date === nextDate && s.turno === 'PM');
+
+  function renderCol(shifts, turno) {
+    if (!shifts.length) return '<div style="color:var(--ink-muted);font-size:12px;font-style:italic">Sin asignar</div>';
+    return shifts.map(s => {
+      const c = getCollab(s.collabId);
+      if (!c) return '';
+      const isAbsent = state.ausencias.some(a => a.date === nextDate && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos'));
+      return `<div class="ns-person" ${isAbsent ? 'style="opacity:0.5;text-decoration:line-through"' : ''}>
+        <div class="person-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
+        <div class="ns-person-info">
+          <div class="ns-person-name">${c.name}</div>
+          <div class="ns-person-role">${s.rol}${isAbsent ? ' — AUSENTE' : ''}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  container.innerHTML = `<div class="next-service">
+    <div class="next-service-header">
+      <div class="next-service-title">Próximo Servicio</div>
+      <div class="next-service-date">${fechaStr} · ${countdown}</div>
+    </div>
+    <div class="next-service-body">
+      <div class="next-service-col">
+        <div class="next-service-col-title am"><span class="turno-badge" style="background:var(--amber-light);color:var(--amber)">AM</span> Turno mañana</div>
+        ${renderCol(amShifts, 'AM')}
+      </div>
+      <div class="next-service-col">
+        <div class="next-service-col-title pm"><span class="turno-badge" style="background:var(--blue-light);color:var(--blue)">PM</span> Turno tarde</div>
+        ${renderCol(pmShifts, 'PM')}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+//  AUSENCIAS
+// ============================================================
+function renderAbsenceForm() {
+  const select = document.getElementById('abs-collab');
+  if (select.children.length === 0) {
+    select.innerHTML = state.collaborators.map(c =>
+      `<option value="${c.id}">${c.name}</option>`
+    ).join('');
+  }
+  const nextSun = getNextSunday();
+  const dateInput = document.getElementById('abs-date');
+  if (!dateInput.value && nextSun) dateInput.value = nextSun;
+}
+
+function renderAbsenceList() {
+  const el = document.getElementById('absence-list');
+  const today = todayStr();
+  const upcoming = state.ausencias
+    .filter(a => a.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  if (!upcoming.length) {
+    el.innerHTML = '<div class="absence-empty">No hay ausencias reportadas próximamente.</div>';
+    return;
+  }
+
+  el.innerHTML = upcoming.map(a => {
+    const c = getCollab(a.collabId);
+    if (!c) return '';
+    const d = new Date(a.date + 'T12:00:00');
+    const turnoStyle = a.turno === 'AM'
+      ? 'background:var(--amber-light);color:var(--amber)'
+      : a.turno === 'PM'
+        ? 'background:var(--blue-light);color:var(--blue)'
+        : 'background:var(--red-light);color:var(--red)';
+    return `<div class="absence-item">
+      <div class="absence-date-badge">
+        <div class="absence-date-day">${d.getDate()}</div>
+        <div class="absence-date-month">${MONTHS[d.getMonth()].slice(0,3)}</div>
+      </div>
+      <div class="absence-info">
+        <div class="absence-person">${c.name}</div>
+        <div class="absence-detail">${a.motivo || 'Sin motivo especificado'}</div>
+      </div>
+      <span class="absence-turno-tag" style="${turnoStyle}">${a.turno}</span>
+    </div>`;
+  }).join('');
+}
+
+async function submitAbsence() {
+  const collabId = document.getElementById('abs-collab').value;
+  const date = document.getElementById('abs-date').value;
+  const turno = document.getElementById('abs-turno').value;
+  const motivo = document.getElementById('abs-motivo').value.trim();
+  const msg = document.getElementById('abs-msg');
+  const btn = document.getElementById('abs-submit');
+
+  if (!collabId || !date) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Selecciona colaborador y fecha.';
+    return;
+  }
+
+  btn.disabled = true;
+  msg.className = 'form-msg';
+  msg.textContent = 'Enviando...';
+
+  const newAbsence = {
+    id: String(Date.now()),
+    date,
+    collabId,
+    turno,
+    motivo,
+  };
+
+  state.ausencias.push(newAbsence);
+  renderAbsenceList();
+
+  if (API_URL && API_URL !== 'TU_URL_AQUI') {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'addAusencia',
+          fecha: date,
+          colaboradorId: collabId,
+          turno,
+          motivo,
+        }),
+      });
+      msg.className = 'form-msg success';
+      msg.textContent = 'Ausencia registrada correctamente.';
+    } catch {
+      msg.className = 'form-msg error';
+      msg.textContent = 'Guardado localmente (sin conexión al Sheet).';
+    }
+  } else {
+    msg.className = 'form-msg success';
+    msg.textContent = 'Guardado en modo demo.';
+  }
+
+  btn.disabled = false;
+  document.getElementById('abs-motivo').value = '';
+
+  if (state.view === 'semanal') { renderWeekGrid(); renderNextService('next-service-semanal'); }
+  if (state.view === 'mensual') renderNextService('next-service-mensual');
+}
+
+// ============================================================
 //  DETAIL MODAL
 // ============================================================
 function openDayDetail(dateStr, turno) {
@@ -512,18 +882,19 @@ function openDayDetail(dateStr, turno) {
 
   const d = new Date(dateStr + 'T12:00:00');
   const fechaLarga = `${DAYS_FULL[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]}`;
-
   document.getElementById('modal-title').textContent = `${turno} — ${fechaLarga}`;
 
   const body = shifts.map(s => {
     const c = getCollab(s.collabId);
     if (!c) return '';
+    const isAbsent = state.ausencias.some(a => a.date === dateStr && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos'));
     return `<div class="detail-field">
       <div style="display:flex;align-items:center;gap:10px">
-        <div class="person-avatar" style="background:${c.color.hex};width:30px;height:30px;font-size:10px">${initials(c.name)}</div>
+        <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex};width:30px;height:30px;font-size:10px">${initials(c.name)}</div>
         <div>
-          <div style="font-weight:500;font-size:14px">${c.name}</div>
+          <div style="font-weight:500;font-size:14px;${isAbsent ? 'text-decoration:line-through' : ''}">${c.name}</div>
           <div style="font-size:12px;color:var(--ink-muted)">${s.rol}</div>
+          ${isAbsent ? '<div style="font-size:11px;color:var(--red);font-weight:500;margin-top:2px">AUSENTE</div>' : ''}
           ${s.notas ? `<div style="font-size:12px;color:var(--ink-muted);font-style:italic;margin-top:2px">${s.notas}</div>` : ''}
         </div>
       </div>
