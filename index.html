@@ -124,6 +124,16 @@
   .cal-shift-pill { display: flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .cal-turno-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
 
+  /* MONTH SHIFTS LIST */
+  .month-shifts { margin-top: 1.5rem; }
+  .month-shift-group { margin-bottom: 1rem; }
+  .month-shift-date-header { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 500; padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .month-shift-date-header .turno-badge { font-size: 10px; }
+  .month-shift-row { display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: white; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 4px; }
+  .month-shift-row .person-avatar { width: 26px; height: 26px; font-size: 9px; }
+  .month-shift-name { font-weight: 500; font-size: 13px; }
+  .month-shift-role { font-size: 12px; color: var(--ink-muted); }
+
   /* AUSENCIAS */
   .absence-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
   .absence-form-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow); }
@@ -261,6 +271,7 @@
       </div>
       <div class="cal-body" id="cal-body"></div>
     </div>
+    <div id="month-shifts-list"></div>
     <div id="next-service-mensual"></div>
   </div>
 
@@ -289,7 +300,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Motivo <span style="opacity:.5;font-size:11px">(opcional)</span></label>
+          <label class="form-label">Motivo</label>
           <textarea class="form-textarea" id="abs-motivo" placeholder="ej. Viaje, enfermedad..."></textarea>
         </div>
         <button class="btn-primary" id="abs-submit" onclick="submitAbsence()">Reportar ausencia</button>
@@ -547,6 +558,7 @@ function render() {
   } else if (state.view === 'mensual') {
     renderMonthTitle();
     renderCalendar();
+    renderMonthShifts();
     renderNextService('next-service-mensual');
   } else if (state.view === 'ausencias') {
     renderAbsenceForm();
@@ -687,6 +699,55 @@ function renderCalendar() {
   document.getElementById('cal-body').innerHTML = html;
 }
 
+function renderMonthShifts() {
+  const el = document.getElementById('month-shifts-list');
+  const monthStr = `${state.calYear}-${String(state.calMonth + 1).padStart(2, '0')}`;
+  const monthShifts = state.shifts
+    .filter(s => s.date.startsWith(monthStr))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.turno.localeCompare(b.turno));
+
+  if (!monthShifts.length) {
+    el.innerHTML = '<div class="month-shifts"><div class="section-title">Turnos del mes</div><div style="text-align:center;padding:2rem;color:var(--ink-muted);font-size:13px;background:white;border-radius:var(--radius);border:1px dashed var(--border)">No hay turnos programados este mes.</div></div>';
+    return;
+  }
+
+  const grouped = {};
+  monthShifts.forEach(s => {
+    const key = s.date + '|' + s.turno;
+    if (!grouped[key]) grouped[key] = { date: s.date, turno: s.turno, shifts: [] };
+    grouped[key].shifts.push(s);
+  });
+
+  const groups = Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date) || a.turno.localeCompare(b.turno));
+
+  let html = '<div class="month-shifts"><div class="section-title">Turnos del mes <span>— ' + monthShifts.length + ' asignaciones</span></div>';
+  groups.forEach(g => {
+    const d = new Date(g.date + 'T12:00:00');
+    const turnoColor = g.turno === 'AM' ? 'var(--amber)' : 'var(--blue)';
+    const turnoBg = g.turno === 'AM' ? 'var(--amber-light)' : 'var(--blue-light)';
+    html += `<div class="month-shift-group">
+      <div class="month-shift-date-header">
+        ${DAYS_FULL[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]}
+        <span class="turno-badge" style="background:${turnoBg};color:${turnoColor}">${g.turno}</span>
+      </div>`;
+    g.shifts.forEach(s => {
+      const c = getCollab(s.collabId);
+      if (!c) return;
+      const isAbsent = state.ausencias.some(a => a.date === g.date && a.collabId === s.collabId && (a.turno === g.turno || a.turno === 'Ambos'));
+      html += `<div class="month-shift-row" ${isAbsent ? 'style="opacity:0.5"' : ''}>
+        <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex}">${initials(c.name)}</div>
+        <div>
+          <div class="month-shift-name" ${isAbsent ? 'style="text-decoration:line-through"' : ''}>${c.name}</div>
+          <div class="month-shift-role">${s.rol}${isAbsent ? ' — AUSENTE' : ''}</div>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
 function changeMonth(delta) {
   state.calMonth += delta;
   if (state.calMonth < 0) { state.calMonth = 11; state.calYear--; }
@@ -825,6 +886,22 @@ async function submitAbsence() {
   if (!collabId || !date) {
     msg.className = 'form-msg error';
     msg.textContent = 'Selecciona colaborador y fecha.';
+    return;
+  }
+
+  if (!motivo) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'El motivo es obligatorio.';
+    return;
+  }
+
+  const selectedDate = new Date(date + 'T12:00:00');
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const hoursUntil = (selectedDate - now) / (1000 * 60 * 60);
+  if (hoursUntil < 72) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Debes reportar la ausencia con al menos 3 días de anticipación.';
     return;
   }
 

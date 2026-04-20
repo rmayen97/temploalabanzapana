@@ -124,11 +124,12 @@ function doPost(e) {
 }
 
 function formatDate(value) {
-  if (value instanceof Date) {
-    var y = value.getFullYear();
-    var m = String(value.getMonth() + 1).padStart(2, '0');
-    var d = String(value.getDate()).padStart(2, '0');
-    return y + '-' + m + '-' + d;
+  // instanceof Date puede fallar en Apps Script V8, usamos getTime como check
+  if (value && typeof value.getTime === 'function') {
+    // Usar Utilities.formatDate con la zona horaria del spreadsheet
+    // para evitar desfases de +/- 1 día
+    var tz = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    return Utilities.formatDate(value, tz, 'yyyy-MM-dd');
   }
   return String(value);
 }
