@@ -124,15 +124,22 @@
   .cal-shift-pill { display: flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .cal-turno-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
 
-  /* MONTH SHIFTS LIST */
+  /* MONTH SHIFTS LIST — compact cards */
   .month-shifts { margin-top: 1.5rem; }
-  .month-shift-group { margin-bottom: 1rem; }
-  .month-shift-date-header { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 500; padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-  .month-shift-date-header .turno-badge { font-size: 10px; }
-  .month-shift-row { display: flex; align-items: center; gap: 10px; padding: 6px 12px; background: white; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 4px; }
-  .month-shift-row .person-avatar { width: 26px; height: 26px; font-size: 9px; }
-  .month-shift-name { font-weight: 500; font-size: 13px; }
-  .month-shift-role { font-size: 12px; color: var(--ink-muted); }
+  .month-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+  .month-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .month-card-header { padding: 10px 14px; background: var(--cream); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .month-card-date { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 500; }
+  .month-card-body { display: grid; grid-template-columns: 1fr 1fr; }
+  .month-card-turno { padding: 10px 14px; }
+  .month-card-turno:first-child { border-right: 1px solid var(--border); }
+  .month-card-turno-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+  .month-card-turno-title.am { color: var(--amber); }
+  .month-card-turno-title.pm { color: var(--blue); }
+  .mc-person { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+  .mc-person .person-avatar { width: 20px; height: 20px; font-size: 8px; }
+  .mc-name { font-size: 12px; font-weight: 500; }
+  .mc-role { font-size: 10px; color: var(--ink-muted); }
 
   /* AUSENCIAS */
   .absence-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
@@ -284,7 +291,7 @@
       <div class="absence-form-card">
         <div class="absence-form-title">Nueva ausencia</div>
         <div class="form-group">
-          <label class="form-label">Colaborador</label>
+          <label class="form-label">Voluntario</label>
           <select class="form-select" id="abs-collab"></select>
         </div>
         <div class="form-group">
@@ -643,7 +650,7 @@ function renderTeam() {
     </div>`;
   }).join('');
   section.innerHTML = `
-    <div class="section-title">Equipo <span>— ${state.collaborators.length} colaboradores</span></div>
+    <div class="section-title">Equipo <span>— ${state.collaborators.length} voluntarios</span></div>
     <div class="team-grid">${cards}</div>`;
 }
 
@@ -702,50 +709,62 @@ function renderCalendar() {
 function renderMonthShifts() {
   const el = document.getElementById('month-shifts-list');
   const monthStr = `${state.calYear}-${String(state.calMonth + 1).padStart(2, '0')}`;
-  const monthShifts = state.shifts
-    .filter(s => s.date.startsWith(monthStr))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.turno.localeCompare(b.turno));
+  const monthShifts = state.shifts.filter(s => s.date.startsWith(monthStr));
 
   if (!monthShifts.length) {
     el.innerHTML = '<div class="month-shifts"><div class="section-title">Turnos del mes</div><div style="text-align:center;padding:2rem;color:var(--ink-muted);font-size:13px;background:white;border-radius:var(--radius);border:1px dashed var(--border)">No hay turnos programados este mes.</div></div>';
     return;
   }
 
-  const grouped = {};
+  const byDate = {};
   monthShifts.forEach(s => {
-    const key = s.date + '|' + s.turno;
-    if (!grouped[key]) grouped[key] = { date: s.date, turno: s.turno, shifts: [] };
-    grouped[key].shifts.push(s);
+    if (!byDate[s.date]) byDate[s.date] = { AM: [], PM: [] };
+    byDate[s.date][s.turno] = byDate[s.date][s.turno] || [];
+    byDate[s.date][s.turno].push(s);
   });
 
-  const groups = Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date) || a.turno.localeCompare(b.turno));
+  const sortedDates = Object.keys(byDate).sort();
 
-  let html = '<div class="month-shifts"><div class="section-title">Turnos del mes <span>— ' + monthShifts.length + ' asignaciones</span></div>';
-  groups.forEach(g => {
-    const d = new Date(g.date + 'T12:00:00');
-    const turnoColor = g.turno === 'AM' ? 'var(--amber)' : 'var(--blue)';
-    const turnoBg = g.turno === 'AM' ? 'var(--amber-light)' : 'var(--blue-light)';
-    html += `<div class="month-shift-group">
-      <div class="month-shift-date-header">
-        ${DAYS_FULL[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]}
-        <span class="turno-badge" style="background:${turnoBg};color:${turnoColor}">${g.turno}</span>
-      </div>`;
-    g.shifts.forEach(s => {
+  function renderPersons(shifts, dateStr, turno) {
+    if (!shifts || !shifts.length) return '<div style="color:var(--ink-muted);font-size:11px;font-style:italic">—</div>';
+    return shifts.map(s => {
       const c = getCollab(s.collabId);
-      if (!c) return;
-      const isAbsent = state.ausencias.some(a => a.date === g.date && a.collabId === s.collabId && (a.turno === g.turno || a.turno === 'Ambos'));
-      html += `<div class="month-shift-row" ${isAbsent ? 'style="opacity:0.5"' : ''}>
+      if (!c) return '';
+      const isAbsent = state.ausencias.some(a => a.date === dateStr && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos'));
+      return `<div class="mc-person" ${isAbsent ? 'style="opacity:0.5"' : ''}>
         <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex}">${initials(c.name)}</div>
         <div>
-          <div class="month-shift-name" ${isAbsent ? 'style="text-decoration:line-through"' : ''}>${c.name}</div>
-          <div class="month-shift-role">${s.rol}${isAbsent ? ' — AUSENTE' : ''}</div>
+          <div class="mc-name" ${isAbsent ? 'style="text-decoration:line-through"' : ''}>${c.name}</div>
+          <div class="mc-role">${s.rol}</div>
         </div>
       </div>`;
-    });
-    html += '</div>';
-  });
-  html += '</div>';
-  el.innerHTML = html;
+    }).join('');
+  }
+
+  const cards = sortedDates.map(dateStr => {
+    const d = new Date(dateStr + 'T12:00:00');
+    const g = byDate[dateStr];
+    return `<div class="month-card">
+      <div class="month-card-header">
+        <div class="month-card-date">${DAYS_FULL[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]}</div>
+      </div>
+      <div class="month-card-body">
+        <div class="month-card-turno">
+          <div class="month-card-turno-title am"><span class="turno-badge" style="background:var(--amber-light);color:var(--amber);font-size:9px;padding:2px 6px">AM</span> Mañana</div>
+          ${renderPersons(g.AM, dateStr, 'AM')}
+        </div>
+        <div class="month-card-turno">
+          <div class="month-card-turno-title pm"><span class="turno-badge" style="background:var(--blue-light);color:var(--blue);font-size:9px;padding:2px 6px">PM</span> Tarde</div>
+          ${renderPersons(g.PM, dateStr, 'PM')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div class="month-shifts">
+    <div class="section-title">Turnos del mes <span>— ${sortedDates.length} servicio${sortedDates.length !== 1 ? 's' : ''}</span></div>
+    <div class="month-cards">${cards}</div>
+  </div>`;
 }
 
 function changeMonth(delta) {
@@ -885,7 +904,7 @@ async function submitAbsence() {
 
   if (!collabId || !date) {
     msg.className = 'form-msg error';
-    msg.textContent = 'Selecciona colaborador y fecha.';
+    msg.textContent = 'Selecciona voluntario y fecha.';
     return;
   }
 
