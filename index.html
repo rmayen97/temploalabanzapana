@@ -194,13 +194,39 @@
   /* MODAL */
   .modal-bg { position: fixed; inset: 0; background: rgba(28,25,23,0.45); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.18s; }
   .modal-bg.open { opacity: 1; pointer-events: all; }
-  .modal { background: white; border-radius: 16px; width: 100%; max-width: 380px; padding: 1.75rem; transform: translateY(12px); transition: transform 0.18s; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal { background: white; border-radius: 16px; width: 100%; max-width: 480px; padding: 1.75rem; transform: translateY(12px); transition: transform 0.18s; box-shadow: 0 20px 60px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
   .modal-bg.open .modal { transform: translateY(0); }
   .modal-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; }
   .detail-field { display: flex; flex-direction: column; gap: 3px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
   .detail-field:last-of-type { border-bottom: none; }
   .btn-secondary { padding: 10px 16px; background: none; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; color: var(--ink-soft); transition: background 0.12s; width: 100%; margin-top: 1rem; }
   .btn-secondary:hover { background: var(--cream); }
+
+  /* CONTENIDO SECTION IN MODAL */
+  .contenido-divider { border: none; border-top: 1px solid var(--border); margin: 16px 0 12px; }
+  .contenido-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .contenido-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+  .btn-edit { padding: 5px 12px; background: none; border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; color: var(--ink-muted); transition: all 0.12s; }
+  .btn-edit:hover { background: var(--forest); color: white; border-color: var(--forest); }
+  .btn-edit.active { background: var(--forest); color: white; border-color: var(--forest); }
+  .contenido-list { display: flex; flex-direction: column; gap: 6px; }
+  .contenido-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-radius: 8px; background: var(--cream); font-size: 13px; }
+  .contenido-item.tipo-cancion { border-left: 3px solid var(--forest); }
+  .contenido-item.tipo-nota { border-left: 3px solid var(--amber); }
+  .contenido-item.tipo-link { border-left: 3px solid var(--blue); }
+  .contenido-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .contenido-text { flex: 1; word-break: break-word; }
+  .contenido-text a { color: var(--blue); text-decoration: underline; }
+  .contenido-delete { background: none; border: none; cursor: pointer; font-size: 14px; color: var(--red); opacity: 0.6; padding: 0 4px; flex-shrink: 0; }
+  .contenido-delete:hover { opacity: 1; }
+  .contenido-empty { text-align: center; padding: 1rem; color: var(--ink-muted); font-size: 12px; font-style: italic; }
+  .contenido-form { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; padding: 12px; background: var(--cream); border-radius: 8px; border: 1px dashed var(--border); }
+  .contenido-form-row { display: flex; gap: 8px; }
+  .contenido-form-row select { padding: 7px 8px; border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: white; flex-shrink: 0; width: 110px; }
+  .contenido-form-row input { flex: 1; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; }
+  .btn-add-contenido { padding: 7px 14px; background: var(--forest); color: white; border: none; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: background 0.12s; align-self: flex-end; }
+  .btn-add-contenido:hover { background: #145240; }
+  .btn-add-contenido:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* RESPONSIVE */
   @media (max-width: 768px) {
@@ -395,6 +421,7 @@ let state = {
   collaborators: [],
   shifts: [],
   ausencias: [],
+  contenido: [],
 };
 
 // ============================================================
@@ -512,6 +539,18 @@ async function init() {
         turno: a.turno || 'Ambos',
         motivo: a.motivo || '',
         estado: (a.estado || 'Pendiente').trim(),
+      }));
+    }
+
+    if (data.contenido) {
+      state.contenido = data.contenido.map(c => ({
+        id: String(c.id),
+        fecha: normalizeDate(c.fecha),
+        turno: (c.turno || 'AM').toUpperCase(),
+        tipo: c.tipo || 'nota',
+        contenido: c.contenido || '',
+        orden: Number(c.orden) || 0,
+        creadoPor: c.creadoPor || '',
       }));
     }
   } catch (err) {
@@ -1093,18 +1132,41 @@ async function submitAbsence() {
 // ============================================================
 //  DETAIL MODAL
 // ============================================================
+let modalEditMode = false;
+let modalDate = '';
+let modalTurno = '';
+
 function openDayDetail(dateStr, turno) {
   const shifts = state.shifts.filter(s => s.date === dateStr && s.turno === turno);
   if (!shifts.length) return;
+
+  modalDate = dateStr;
+  modalTurno = turno;
+  modalEditMode = false;
 
   const d = new Date(dateStr + 'T12:00:00');
   const fechaLarga = `${DAYS_FULL[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]}`;
   document.getElementById('modal-title').textContent = `${turno} — ${fechaLarga}`;
 
-  const body = shifts.map(s => {
+  renderModalBody();
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+function renderModalBody() {
+  const shifts = state.shifts.filter(s => s.date === modalDate && s.turno === modalTurno);
+  const items = state.contenido
+    .filter(c => c.fecha === modalDate && c.turno === modalTurno)
+    .sort((a, b) => a.orden - b.orden);
+
+  const iconMap = { cancion: '🎵', nota: '📝', link: '🔗' };
+
+  let html = '';
+
+  // Volunteers section
+  html += shifts.map(s => {
     const c = getCollab(s.collabId);
     if (!c) return '';
-    const isAbsent = state.ausencias.some(a => a.date === dateStr && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos') && a.estado && a.estado.toLowerCase() === 'aprobada');
+    const isAbsent = state.ausencias.some(a => a.date === modalDate && a.collabId === s.collabId && (a.turno === modalTurno || a.turno === 'Ambos') && a.estado && a.estado.toLowerCase() === 'aprobada');
     return `<div class="detail-field">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex};width:30px;height:30px;font-size:10px">${initials(c.name)}</div>
@@ -1118,17 +1180,140 @@ function openDayDetail(dateStr, turno) {
     </div>`;
   }).join('');
 
-  document.getElementById('modal-body').innerHTML = body;
-  document.getElementById('detail-modal').classList.add('open');
+  // Contenido section
+  html += '<hr class="contenido-divider">';
+  html += `<div class="contenido-header">
+    <div class="contenido-title">📋 Contenido del turno</div>
+    <button class="btn-edit${modalEditMode ? ' active' : ''}" onclick="toggleEditMode()">
+      ${modalEditMode ? '✓ Listo' : '✏️ Editar'}
+    </button>
+  </div>`;
+
+  if (items.length) {
+    html += '<div class="contenido-list">';
+    items.forEach(item => {
+      const icon = iconMap[item.tipo] || '📝';
+      let text = item.contenido;
+      if (item.tipo === 'link') {
+        text = `<a href="${item.contenido}" target="_blank" rel="noopener">${item.contenido}</a>`;
+      }
+      html += `<div class="contenido-item tipo-${item.tipo}">
+        <span class="contenido-icon">${icon}</span>
+        <div class="contenido-text">
+          ${text}
+          ${item.creadoPor ? `<div style="font-size:10px;color:var(--ink-muted);margin-top:2px">— ${item.creadoPor}</div>` : ''}
+        </div>
+        ${modalEditMode ? `<button class="contenido-delete" onclick="deleteContenido('${item.id}')" title="Eliminar">✕</button>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  } else {
+    html += '<div class="contenido-empty">No hay contenido para este turno.</div>';
+  }
+
+  if (modalEditMode) {
+    html += `<div class="contenido-form">
+      <div class="contenido-form-row">
+        <select id="cont-tipo">
+          <option value="cancion">🎵 Canción</option>
+          <option value="nota">📝 Nota</option>
+          <option value="link">🔗 Link</option>
+        </select>
+        <input id="cont-texto" type="text" placeholder="Nombre de canción, nota o URL..." />
+      </div>
+      <button class="btn-add-contenido" onclick="addContenido()">Agregar</button>
+      <div class="form-msg" id="cont-msg" style="font-size:11px;min-height:14px"></div>
+    </div>`;
+  }
+
+  document.getElementById('modal-body').innerHTML = html;
+}
+
+function toggleEditMode() {
+  modalEditMode = !modalEditMode;
+  renderModalBody();
+}
+
+async function addContenido() {
+  const tipo = document.getElementById('cont-tipo').value;
+  const texto = document.getElementById('cont-texto').value.trim();
+  const msg = document.getElementById('cont-msg');
+
+  if (!texto) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Escribe el contenido.';
+    return;
+  }
+
+  const myCollab = getCollab(state.myVolunteerId);
+  const creadoPor = myCollab ? myCollab.name : '';
+
+  const currentItems = state.contenido.filter(c => c.fecha === modalDate && c.turno === modalTurno);
+  const orden = currentItems.length + 1;
+
+  const newItem = {
+    id: String(Date.now()),
+    fecha: modalDate,
+    turno: modalTurno,
+    tipo,
+    contenido: texto,
+    orden,
+    creadoPor,
+  };
+
+  state.contenido.push(newItem);
+  renderModalBody();
+
+  if (API_URL && API_URL !== 'TU_URL_AQUI') {
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'addContenido',
+          fecha: modalDate,
+          turno: modalTurno,
+          tipo,
+          contenido: texto,
+          orden,
+          creadoPor,
+        }),
+      });
+      const data = await res.json();
+      if (data.id) newItem.id = String(data.id);
+    } catch (err) {
+      console.error('Error saving contenido:', err);
+    }
+  }
+}
+
+async function deleteContenido(id) {
+  state.contenido = state.contenido.filter(c => c.id !== id);
+  renderModalBody();
+
+  if (API_URL && API_URL !== 'TU_URL_AQUI') {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'deleteContenido', id }),
+      });
+    } catch (err) {
+      console.error('Error deleting contenido:', err);
+    }
+  }
 }
 
 function closeModal(e) {
-  if (!e || e.target === document.getElementById('detail-modal'))
+  if (!e || e.target === document.getElementById('detail-modal')) {
     document.getElementById('detail-modal').classList.remove('open');
+    modalEditMode = false;
+  }
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.getElementById('detail-modal').classList.remove('open');
+  if (e.key === 'Escape') {
+    document.getElementById('detail-modal').classList.remove('open');
+    modalEditMode = false;
+  }
 });
 
 // ============================================================
