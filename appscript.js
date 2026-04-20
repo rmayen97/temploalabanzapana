@@ -7,6 +7,8 @@
 //  2. "Turnos":         id | fecha | turno | colaboradorId | rol | notas
 //  3. "Ausencias":      id | fecha | colaboradorId | turno | motivo | fechaReporte | estado
 //                       (estado: "Pendiente", "Aprobada" o "Rechazada" — se cambia manualmente en el Sheet)
+//  4. "Contenido":      id | fecha | turno | tipo | contenido | orden | creadoPor
+//                       (tipo: "cancion", "nota" o "link")
 //
 //  INSTRUCCIONES:
 //  1. Abre tu Google Sheet
@@ -77,7 +79,27 @@ function doGet(e) {
     }
   }
 
-  var output = JSON.stringify({ colaboradores: colaboradores, turnos: turnos, ausencias: ausencias });
+  // --- Contenido ---
+  var contenido = [];
+  var contSheet = ss.getSheetByName('Contenido');
+  if (contSheet) {
+    var contData = contSheet.getDataRange().getValues();
+    for (var i = 1; i < contData.length; i++) {
+      var row = contData[i];
+      if (!row[0]) continue;
+      contenido.push({
+        id:        String(row[0]),
+        fecha:     formatDate(row[1]),
+        turno:     row[2] || 'AM',
+        tipo:      row[3] || 'nota',
+        contenido: row[4] || '',
+        orden:     row[5] || i,
+        creadoPor: row[6] || '',
+      });
+    }
+  }
+
+  var output = JSON.stringify({ colaboradores: colaboradores, turnos: turnos, ausencias: ausencias, contenido: contenido });
   return ContentService.createTextOutput(output).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -154,6 +176,43 @@ function doPost(e) {
 
     return ContentService.createTextOutput(
       JSON.stringify({ success: true, id: newId })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (data.action === 'addContenido') {
+    var sheet = ss.getSheetByName('Contenido');
+    if (!sheet) {
+      sheet = ss.insertSheet('Contenido');
+      sheet.appendRow(['id', 'fecha', 'turno', 'tipo', 'contenido', 'orden', 'creadoPor']);
+    }
+    var newId = sheet.getLastRow();
+    sheet.appendRow([
+      newId,
+      data.fecha,
+      data.turno || 'AM',
+      data.tipo || 'nota',
+      data.contenido || '',
+      data.orden || 1,
+      data.creadoPor || ''
+    ]);
+    return ContentService.createTextOutput(
+      JSON.stringify({ success: true, id: newId })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  if (data.action === 'deleteContenido') {
+    var sheet = ss.getSheetByName('Contenido');
+    if (sheet) {
+      var contData = sheet.getDataRange().getValues();
+      for (var i = contData.length - 1; i >= 1; i--) {
+        if (String(contData[i][0]) === String(data.id)) {
+          sheet.deleteRow(i + 1);
+          break;
+        }
+      }
+    }
+    return ContentService.createTextOutput(
+      JSON.stringify({ success: true })
     ).setMimeType(ContentService.MimeType.JSON);
   }
 
