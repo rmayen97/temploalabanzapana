@@ -70,9 +70,12 @@
   .turno-badge { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px; }
   .turno-am .turno-badge { background: var(--amber-light); color: var(--amber); }
   .turno-pm .turno-badge { background: var(--blue-light); color: var(--blue); }
-  .grid-cell { padding: 8px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 100px; display: flex; flex-direction: column; gap: 4px; }
+  .grid-cell { padding: 8px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); min-height: 100px; display: flex; flex-direction: column; gap: 4px; position: relative; cursor: pointer; }
   .grid-cell:nth-child(8n) { border-right: none; }
   .grid-cell.today-col { background: #FAFFF8; }
+  .grid-cell .cell-hover { position: absolute; inset: 0; background: rgba(27,94,75,0.08); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; pointer-events: none; border-radius: 2px; }
+  .grid-cell:hover .cell-hover { opacity: 1; }
+  .cell-hover-label { background: var(--forest); color: white; font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 6px; pointer-events: none; }
   .week-grid > .grid-cell:nth-last-child(-n+8) { border-bottom: none; }
   .week-grid > .grid-turno-label:nth-last-child(-n+8) { border-bottom: none; }
 
@@ -113,6 +116,11 @@
   .ns-person-name { font-weight: 500; font-size: 13px; }
   .ns-person-role { font-size: 11px; color: var(--ink-muted); }
   .next-service-empty { padding: 2rem; text-align: center; color: var(--ink-muted); font-size: 13px; }
+  .ns-contenido { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .ns-contenido-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); margin-bottom: 6px; }
+  .ns-contenido-item { display: flex; align-items: flex-start; gap: 5px; font-size: 12px; color: var(--ink-soft); padding: 2px 0; }
+  .ns-contenido-item a { color: var(--blue); text-decoration: underline; }
+  .ns-contenido-pending { font-size: 11px; color: var(--ink-muted); font-style: italic; margin-top: 6px; }
 
   /* TEAM PANEL */
   .team-section { margin-top: 1.5rem; }
@@ -133,6 +141,8 @@
   .cal-cell { min-height: 90px; padding: 8px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; position: relative; }
   .cal-cell:nth-child(7n) { border-right: none; }
   .cal-cell:hover:not(.empty) { background: #FAFAF9; }
+  .cal-cell .cell-hover { position: absolute; inset: 0; background: rgba(27,94,75,0.08); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+  .cal-cell.has-shifts:hover .cell-hover { opacity: 1; }
   .cal-cell.empty { background: var(--cream); opacity: 0.5; cursor: default; }
   .cal-cell.today { background: #F0FDF4; }
   .cal-cell.today .cal-day-num { background: var(--forest); color: white; }
@@ -770,6 +780,7 @@ function renderWeekGrid() {
             </div>
           </div>`;
         });
+        html += '<div class="cell-hover"><span class="cell-hover-label">Ver detalles</span></div>';
       } else {
         html += '<div class="empty-cell">—</div>';
       }
@@ -835,7 +846,8 @@ function renderCalendar() {
     const amShifts = state.shifts.filter(s => s.date === ds && s.turno === 'AM');
     const pmShifts = state.shifts.filter(s => s.date === ds && s.turno === 'PM');
 
-    html += `<div class="cal-cell${isToday ? ' today' : ''}" onclick="openDayDetail('${ds}', amShifts.length ? 'AM' : 'PM')">`;
+    const hasShifts = amShifts.length || pmShifts.length;
+    html += `<div class="cal-cell${isToday ? ' today' : ''}${hasShifts ? ' has-shifts' : ''}" onclick="openDayDetail('${ds}', amShifts.length ? 'AM' : 'PM')">`;
     html += `<div class="cal-day-num">${d}</div>`;
 
     if (amShifts.length) {
@@ -847,6 +859,9 @@ function renderCalendar() {
       html += `<div class="cal-shift-pill" style="background:var(--blue-light);color:var(--blue)" onclick="event.stopPropagation();openDayDetail('${ds}','PM')">
         <span class="cal-turno-dot" style="background:var(--blue)"></span>PM · ${pmShifts.length}
       </div>`;
+    }
+    if (hasShifts) {
+      html += '<div class="cell-hover"><span class="cell-hover-label">Ver detalles</span></div>';
     }
     html += '</div>';
   }
@@ -963,7 +978,8 @@ function renderNextService(containerId) {
 
   function renderCol(shifts, turno) {
     if (!shifts.length) return '<div style="color:var(--ink-muted);font-size:12px;font-style:italic">Sin asignar</div>';
-    return shifts.map(s => {
+    const iconMap = { cancion: '🎵', nota: '📝', link: '🔗' };
+    let html = shifts.map(s => {
       const c = getCollab(s.collabId);
       if (!c) return '';
       const isAbsent = state.ausencias.some(a => a.date === nextDate && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos') && a.estado && a.estado.toLowerCase() === 'aprobada');
@@ -975,6 +991,26 @@ function renderNextService(containerId) {
         </div>
       </div>`;
     }).join('');
+
+    const items = state.contenido
+      .filter(c => c.fecha === nextDate && c.turno === turno)
+      .sort((a, b) => a.orden - b.orden);
+
+    html += '<div class="ns-contenido">';
+    html += '<div class="ns-contenido-title">📋 Contenido</div>';
+    if (items.length) {
+      html += items.map(item => {
+        const icon = iconMap[item.tipo] || '📝';
+        let text = item.contenido;
+        if (item.tipo === 'link') text = `<a href="${item.contenido}" target="_blank" rel="noopener">${item.contenido}</a>`;
+        return `<div class="ns-contenido-item"><span>${icon}</span> <span>${text}</span></div>`;
+      }).join('');
+    } else {
+      html += '<div class="ns-contenido-pending">Contenido pendiente de asignar</div>';
+    }
+    html += '</div>';
+
+    return html;
   }
 
   container.innerHTML = `<div class="next-service">
