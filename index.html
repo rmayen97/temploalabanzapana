@@ -27,6 +27,8 @@
   .tab-btn { background: none; border: none; color: rgba(247,244,238,0.5); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: all 0.15s; }
   .tab-btn.active { background: rgba(247,244,238,0.12); color: var(--cream); }
   .tab-btn:hover:not(.active) { color: rgba(247,244,238,0.8); }
+  .my-select { background: rgba(247,244,238,0.1); border: 1px solid rgba(247,244,238,0.2); color: var(--cream); font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 5px 10px; border-radius: 8px; cursor: pointer; outline: none; max-width: 150px; }
+  .my-select option { color: var(--ink); background: white; }
 
   /* LOADER */
   .loader-overlay { position: fixed; inset: 0; background: var(--cream); z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: opacity 0.3s; }
@@ -80,6 +82,20 @@
   .person-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .person-roles { font-size: 10px; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .empty-cell { color: var(--ink-muted); font-size: 11px; font-style: italic; opacity: 0.5; margin: auto; }
+
+  /* MI TURNO */
+  .my-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 1.5rem; box-shadow: var(--shadow); display: flex; align-items: center; gap: 16px; border-left: 4px solid var(--forest); }
+  .my-card-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; color: white; flex-shrink: 0; }
+  .my-card-info { flex: 1; }
+  .my-card-name { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; }
+  .my-card-roles { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+  .my-card-stats { display: flex; gap: 16px; margin-top: 6px; }
+  .my-stat { font-size: 12px; color: var(--ink-soft); }
+  .my-stat strong { font-weight: 600; color: var(--ink); }
+  .person-card.dimmed { opacity: 0.3; }
+  .person-card.highlighted { outline: 2px solid var(--forest); outline-offset: -1px; }
+  .mc-person.dimmed { opacity: 0.3; }
+  .mc-person.highlighted { background: var(--forest-light); border-radius: 6px; padding: 3px 6px; margin: -3px -6px; }
 
   /* PRÓXIMO SERVICIO */
   .next-service { margin-top: 1.5rem; background: white; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
@@ -204,8 +220,11 @@
     .absence-layout { grid-template-columns: 1fr; }
     .next-service-body { grid-template-columns: 1fr; }
     .next-service-col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
-    .header-nav { gap: 2px; }
+    .header-nav { gap: 2px; flex-wrap: wrap; }
     .tab-btn { font-size: 12px; padding: 5px 10px; }
+    .my-select { max-width: 120px; font-size: 11px; }
+    .my-card { flex-direction: column; text-align: center; gap: 10px; }
+    .my-card-stats { justify-content: center; }
   }
   @media (max-width: 480px) {
     .week-grid { grid-template-columns: 36px repeat(7, 1fr); }
@@ -236,6 +255,9 @@
     <button class="tab-btn active" onclick="switchView('semanal')">Semanal</button>
     <button class="tab-btn" onclick="switchView('mensual')">Mensual</button>
     <button class="tab-btn" onclick="switchView('ausencias')">Ausencias</button>
+    <select class="my-select" id="my-volunteer" onchange="setMyVolunteer(this.value)">
+      <option value="">Todos</option>
+    </select>
   </nav>
 </header>
 
@@ -252,6 +274,7 @@
 
   <!-- ==================== SEMANAL ==================== -->
   <div class="view-panel active" id="view-semanal">
+    <div id="my-card-semanal"></div>
     <div class="nav-bar">
       <div class="nav-title" id="week-title"></div>
       <div class="nav-controls">
@@ -267,6 +290,7 @@
 
   <!-- ==================== MENSUAL ==================== -->
   <div class="view-panel" id="view-mensual">
+    <div id="my-card-mensual"></div>
     <div class="nav-bar">
       <div class="nav-title" id="month-title"></div>
       <div class="nav-controls">
@@ -364,6 +388,7 @@ const COLOR_MAP = [
 
 let state = {
   view: 'semanal',
+  myVolunteerId: localStorage.getItem('myVolunteerId') || '',
   weekStart: getMonday(new Date()),
   calYear: new Date().getFullYear(),
   calMonth: new Date().getMonth(),
@@ -496,7 +521,80 @@ async function init() {
   }
 
   document.getElementById('loader').classList.add('hidden');
+  populateMySelect();
   render();
+}
+
+// ============================================================
+//  MI TURNO
+// ============================================================
+function populateMySelect() {
+  const select = document.getElementById('my-volunteer');
+  select.innerHTML = '<option value="">Todos</option>' +
+    state.collaborators.map(c => `<option value="${c.id}"${c.id === state.myVolunteerId ? ' selected' : ''}>${c.name}</option>`).join('');
+}
+
+function setMyVolunteer(id) {
+  state.myVolunteerId = id;
+  if (id) localStorage.setItem('myVolunteerId', id);
+  else localStorage.removeItem('myVolunteerId');
+  render();
+}
+
+function renderMyCard(containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!state.myVolunteerId) { el.innerHTML = ''; return; }
+
+  const c = getCollab(state.myVolunteerId);
+  if (!c) { el.innerHTML = ''; return; }
+
+  const allMyShifts = state.shifts.filter(s => s.collabId === c.id);
+  const today = todayStr();
+  const upcoming = allMyShifts.filter(s => s.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  const nextShift = upcoming[0];
+
+  const monthStr = containerId.includes('mensual')
+    ? `${state.calYear}-${String(state.calMonth + 1).padStart(2, '0')}`
+    : null;
+
+  let periodShifts, periodLabel;
+  if (monthStr) {
+    periodShifts = allMyShifts.filter(s => s.date.startsWith(monthStr));
+    periodLabel = 'este mes';
+  } else {
+    const weekDates = getWeekDates(state.weekStart).map(dateToStr);
+    periodShifts = allMyShifts.filter(s => weekDates.includes(s.date));
+    periodLabel = 'esta semana';
+  }
+
+  const amCount = periodShifts.filter(s => s.turno === 'AM').length;
+  const pmCount = periodShifts.filter(s => s.turno === 'PM').length;
+
+  let nextInfo = 'Sin turnos próximos';
+  if (nextShift) {
+    const d = new Date(nextShift.date + 'T12:00:00');
+    const diff = Math.round((d - new Date(today + 'T12:00:00')) / 86400000);
+    const when = diff === 0 ? 'Hoy' : diff === 1 ? 'Mañana' : `En ${diff} días`;
+    nextInfo = `${when} · ${DAYS_SHORT[d.getDay()]} ${d.getDate()} · ${nextShift.turno} · ${nextShift.rol}`;
+  }
+
+  const roleTags = c.roles.split(',').map(r => r.trim()).filter(Boolean).map(r =>
+    `<span class="role-tag" style="background:${c.color.bg};color:${c.color.fg}">${r}</span>`
+  ).join('');
+
+  el.innerHTML = `<div class="my-card" style="border-left-color:${c.color.hex}">
+    <div class="my-card-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
+    <div class="my-card-info">
+      <div class="my-card-name">${c.name}</div>
+      <div class="my-card-roles">${roleTags}</div>
+      <div class="my-card-stats">
+        <div class="my-stat"><strong>${periodShifts.length}</strong> turno${periodShifts.length !== 1 ? 's' : ''} ${periodLabel}</div>
+        <div class="my-stat">AM: <strong>${amCount}</strong> · PM: <strong>${pmCount}</strong></div>
+      </div>
+      <div style="font-size:12px;color:var(--forest);font-weight:500;margin-top:4px">${nextInfo}</div>
+    </div>
+  </div>`;
 }
 
 function loadDemoData() {
@@ -564,11 +662,13 @@ function switchView(v) {
 // ============================================================
 function render() {
   if (state.view === 'semanal') {
+    renderMyCard('my-card-semanal');
     renderWeekTitle();
     renderWeekGrid();
     renderNextService('next-service-semanal');
     renderTeam();
   } else if (state.view === 'mensual') {
+    renderMyCard('my-card-mensual');
     renderMonthTitle();
     renderCalendar();
     renderMonthShifts();
@@ -620,7 +720,10 @@ function renderWeekGrid() {
           const c = getCollab(s.collabId);
           if (!c) return;
           const isAbsent = state.ausencias.some(a => a.date === ds && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos') && a.estado && a.estado.toLowerCase() === 'aprobada');
-          html += `<div class="person-card" style="background:${isAbsent ? 'var(--red-light)' : c.color.bg};color:${isAbsent ? 'var(--red)' : c.color.fg};${isAbsent ? 'text-decoration:line-through;opacity:0.7' : ''}">
+          const myId = state.myVolunteerId;
+          const isMe = myId && s.collabId === myId;
+          const dimClass = myId ? (isMe ? ' highlighted' : ' dimmed') : '';
+          html += `<div class="person-card${dimClass}" style="background:${isAbsent ? 'var(--red-light)' : c.color.bg};color:${isAbsent ? 'var(--red)' : c.color.fg};${isAbsent ? 'text-decoration:line-through;opacity:0.7' : ''}">
             <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex}">${initials(c.name)}</div>
             <div>
               <div class="person-name">${c.name.split(' ')[0]}</div>
@@ -737,7 +840,10 @@ function renderMonthShifts() {
       const c = getCollab(s.collabId);
       if (!c) return '';
       const isAbsent = state.ausencias.some(a => a.date === dateStr && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos') && a.estado && a.estado.toLowerCase() === 'aprobada');
-      return `<div class="mc-person" ${isAbsent ? 'style="opacity:0.5"' : ''}>
+      const myId = state.myVolunteerId;
+      const isMe = myId && s.collabId === myId;
+      const dimClass = myId ? (isMe ? ' highlighted' : ' dimmed') : '';
+      return `<div class="mc-person${dimClass}" ${isAbsent ? 'style="opacity:0.5"' : ''}>
         <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex}">${initials(c.name)}</div>
         <div>
           <div class="mc-name" ${isAbsent ? 'style="text-decoration:line-through"' : ''}>${c.name}</div>
@@ -857,7 +963,7 @@ function renderAbsenceForm() {
   const select = document.getElementById('abs-collab');
   if (select.children.length === 0) {
     select.innerHTML = state.collaborators.map(c =>
-      `<option value="${c.id}">${c.name}</option>`
+      `<option value="${c.id}"${c.id === state.myVolunteerId ? ' selected' : ''}>${c.name}</option>`
     ).join('');
   }
   const nextSun = getNextSunday();
