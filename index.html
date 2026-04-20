@@ -168,6 +168,11 @@
   .absence-person { font-weight: 500; font-size: 13px; }
   .absence-detail { font-size: 12px; color: var(--ink-muted); }
   .absence-turno-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 12px; }
+  .absence-status { font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 12px; white-space: nowrap; }
+  .status-pendiente { background: #FEF3C7; color: #B45309; }
+  .status-aprobada { background: #DCFCE7; color: #15803D; }
+  .status-rechazada { background: #FEE2E2; color: #DC2626; }
+  .absence-tags { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
   .absence-empty { text-align: center; padding: 2rem; color: var(--ink-muted); font-size: 13px; }
 
   /* MODAL */
@@ -481,6 +486,7 @@ async function init() {
         collabId: String(a.colaboradorId),
         turno: a.turno || 'Ambos',
         motivo: a.motivo || '',
+        estado: (a.estado || 'Pendiente').trim(),
       }));
     }
   } catch (err) {
@@ -613,7 +619,7 @@ function renderWeekGrid() {
         cellShifts.forEach(s => {
           const c = getCollab(s.collabId);
           if (!c) return;
-          const isAbsent = state.ausencias.some(a => a.date === ds && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos'));
+          const isAbsent = state.ausencias.some(a => a.date === ds && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos') && a.estado && a.estado.toLowerCase() === 'aprobada');
           html += `<div class="person-card" style="background:${isAbsent ? 'var(--red-light)' : c.color.bg};color:${isAbsent ? 'var(--red)' : c.color.fg};${isAbsent ? 'text-decoration:line-through;opacity:0.7' : ''}">
             <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex}">${initials(c.name)}</div>
             <div>
@@ -730,7 +736,7 @@ function renderMonthShifts() {
     return shifts.map(s => {
       const c = getCollab(s.collabId);
       if (!c) return '';
-      const isAbsent = state.ausencias.some(a => a.date === dateStr && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos'));
+      const isAbsent = state.ausencias.some(a => a.date === dateStr && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos') && a.estado && a.estado.toLowerCase() === 'aprobada');
       return `<div class="mc-person" ${isAbsent ? 'style="opacity:0.5"' : ''}>
         <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex}">${initials(c.name)}</div>
         <div>
@@ -815,7 +821,7 @@ function renderNextService(containerId) {
     return shifts.map(s => {
       const c = getCollab(s.collabId);
       if (!c) return '';
-      const isAbsent = state.ausencias.some(a => a.date === nextDate && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos'));
+      const isAbsent = state.ausencias.some(a => a.date === nextDate && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos') && a.estado && a.estado.toLowerCase() === 'aprobada');
       return `<div class="ns-person" ${isAbsent ? 'style="opacity:0.5;text-decoration:line-through"' : ''}>
         <div class="person-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
         <div class="ns-person-info">
@@ -880,6 +886,11 @@ function renderAbsenceList() {
       : a.turno === 'PM'
         ? 'background:var(--blue-light);color:var(--blue)'
         : 'background:var(--red-light);color:var(--red)';
+    const estado = a.estado || 'Pendiente';
+    const statusClass = estado.toLowerCase() === 'aprobada' ? 'status-aprobada'
+      : estado.toLowerCase() === 'rechazada' ? 'status-rechazada'
+      : 'status-pendiente';
+    const statusLabel = estado.charAt(0).toUpperCase() + estado.slice(1).toLowerCase();
     return `<div class="absence-item">
       <div class="absence-date-badge">
         <div class="absence-date-day">${d.getDate()}</div>
@@ -889,7 +900,10 @@ function renderAbsenceList() {
         <div class="absence-person">${c.name}</div>
         <div class="absence-detail">${a.motivo || 'Sin motivo especificado'}</div>
       </div>
-      <span class="absence-turno-tag" style="${turnoStyle}">${a.turno}</span>
+      <div class="absence-tags">
+        <span class="absence-status ${statusClass}">${statusLabel}</span>
+        <span class="absence-turno-tag" style="${turnoStyle}">${a.turno}</span>
+      </div>
     </div>`;
   }).join('');
 }
@@ -934,6 +948,7 @@ async function submitAbsence() {
     collabId,
     turno,
     motivo,
+    estado: 'Pendiente',
   };
 
   state.ausencias.push(newAbsence);
@@ -952,14 +967,14 @@ async function submitAbsence() {
         }),
       });
       msg.className = 'form-msg success';
-      msg.textContent = 'Ausencia registrada correctamente.';
+      msg.textContent = 'Solicitud enviada. Pendiente de aprobación.';
     } catch {
       msg.className = 'form-msg error';
       msg.textContent = 'Guardado localmente (sin conexión al Sheet).';
     }
   } else {
     msg.className = 'form-msg success';
-    msg.textContent = 'Guardado en modo demo.';
+    msg.textContent = 'Solicitud enviada (modo demo).';
   }
 
   btn.disabled = false;
@@ -983,7 +998,7 @@ function openDayDetail(dateStr, turno) {
   const body = shifts.map(s => {
     const c = getCollab(s.collabId);
     if (!c) return '';
-    const isAbsent = state.ausencias.some(a => a.date === dateStr && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos'));
+    const isAbsent = state.ausencias.some(a => a.date === dateStr && a.collabId === s.collabId && (a.turno === turno || a.turno === 'Ambos') && a.estado && a.estado.toLowerCase() === 'aprobada');
     return `<div class="detail-field">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex};width:30px;height:30px;font-size:10px">${initials(c.name)}</div>

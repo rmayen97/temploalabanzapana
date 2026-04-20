@@ -5,7 +5,8 @@
 //
 //  1. "Colaboradores":  id | nombre | roles | color
 //  2. "Turnos":         id | fecha | turno | colaboradorId | rol | notas
-//  3. "Ausencias":      id | fecha | colaboradorId | turno | motivo | fechaReporte
+//  3. "Ausencias":      id | fecha | colaboradorId | turno | motivo | fechaReporte | estado
+//                       (estado: "Pendiente", "Aprobada" o "Rechazada" — se cambia manualmente en el Sheet)
 //
 //  INSTRUCCIONES:
 //  1. Abre tu Google Sheet
@@ -66,6 +67,7 @@ function doGet(e) {
         colaboradorId:  String(row[2]),
         turno:          row[3] || 'Ambos',
         motivo:         row[4] || '',
+        estado:         row[6] || 'Pendiente',
       });
     }
   }
@@ -98,7 +100,7 @@ function doPost(e) {
     var sheet = ss.getSheetByName('Ausencias');
     if (!sheet) {
       sheet = ss.insertSheet('Ausencias');
-      sheet.appendRow(['id', 'fecha', 'colaboradorId', 'turno', 'motivo', 'fechaReporte']);
+      sheet.appendRow(['id', 'fecha', 'colaboradorId', 'turno', 'motivo', 'fechaReporte', 'estado']);
     }
     var newId = sheet.getLastRow();
     var now = new Date();
@@ -111,7 +113,8 @@ function doPost(e) {
       data.colaboradorId,
       data.turno || 'Ambos',
       data.motivo || '',
-      fechaReporte
+      fechaReporte,
+      'Pendiente'
     ]);
     return ContentService.createTextOutput(
       JSON.stringify({ success: true, id: newId })
