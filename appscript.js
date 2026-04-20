@@ -17,6 +17,11 @@
 //  6. Ejecutar como: "Yo" | Acceso: "Cualquier persona"
 //  7. Copia la nueva URL y actualízala en index.html
 // ============================================================
+//  CONFIGURACIÓN DE NOTIFICACIONES
+// ============================================================
+var ADMIN_EMAIL = "kevin.rodrigo.mayen@gmail.com";
+// Agrega más correos separados por coma: "admin1@mail.com,admin2@mail.com"
+// ============================================================
 
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -116,6 +121,37 @@ function doPost(e) {
       fechaReporte,
       'Pendiente'
     ]);
+
+    // --- Notificación por email ---
+    try {
+      var nombreVoluntario = data.colaboradorId;
+      var colabSheet = ss.getSheetByName('Colaboradores');
+      if (colabSheet) {
+        var colabData = colabSheet.getDataRange().getValues();
+        for (var j = 1; j < colabData.length; j++) {
+          if (String(colabData[j][0]) === String(data.colaboradorId)) {
+            nombreVoluntario = colabData[j][1];
+            break;
+          }
+        }
+      }
+
+      var asunto = 'Nueva ausencia reportada — ' + nombreVoluntario;
+      var cuerpo = 'Se ha reportado una nueva ausencia:\n\n'
+        + 'Voluntario: ' + nombreVoluntario + '\n'
+        + 'Fecha del servicio: ' + data.fecha + '\n'
+        + 'Turno: ' + (data.turno || 'Ambos') + '\n'
+        + 'Motivo: ' + (data.motivo || 'No especificado') + '\n'
+        + 'Fecha de reporte: ' + fechaReporte + '\n'
+        + 'Estado: Pendiente\n\n'
+        + 'Para aprobar o rechazar, abre el Google Sheet en la hoja "Ausencias" y cambia la columna "estado".\n'
+        + ss.getUrl();
+
+      MailApp.sendEmail(ADMIN_EMAIL, asunto, cuerpo);
+    } catch (emailErr) {
+      // No bloquear si falla el envío de email
+    }
+
     return ContentService.createTextOutput(
       JSON.stringify({ success: true, id: newId })
     ).setMimeType(ContentService.MimeType.JSON);
