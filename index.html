@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Turnos — Templo de Alabanza Panajachel</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -238,6 +239,16 @@
   .btn-add-contenido:hover { background: #145240; }
   .btn-add-contenido:disabled { opacity: 0.5; cursor: not-allowed; }
 
+  /* SHARE BUTTONS */
+  .modal-actions { display: flex; gap: 8px; margin-top: 1rem; }
+  .modal-actions .btn-share { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: white; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.12s; color: var(--ink-soft); }
+  .btn-share:hover { background: var(--cream); }
+  .btn-share.img-btn { background: #25D366; color: white; border-color: #25D366; }
+  .btn-share.img-btn:hover { background: #1DA851; }
+  .btn-share.img-btn:disabled { opacity: 0.6; cursor: wait; }
+  .btn-share-icon { font-size: 15px; }
+  .btn-share-feedback { font-size: 11px; text-align: center; margin-top: 6px; min-height: 16px; color: var(--forest); font-weight: 500; }
+
   /* RESPONSIVE */
   @media (max-width: 768px) {
     .week-grid { grid-template-columns: 44px repeat(7, 1fr); font-size: 12px; }
@@ -390,8 +401,19 @@
 <!-- DETAIL MODAL -->
 <div class="modal-bg" id="detail-modal" onclick="closeModal(event)">
   <div class="modal">
-    <div class="modal-title" id="modal-title"></div>
-    <div id="modal-body"></div>
+    <div id="modal-capture">
+      <div class="modal-title" id="modal-title"></div>
+      <div id="modal-body"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-share img-btn" id="btn-share-img" onclick="shareAsImage()">
+        <span class="btn-share-icon">📷</span> Descargar imagen
+      </button>
+      <button class="btn-share" onclick="copyShareLink()">
+        <span class="btn-share-icon">🔗</span> Copiar link
+      </button>
+    </div>
+    <div class="btn-share-feedback" id="share-feedback"></div>
     <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
   </div>
 </div>
@@ -572,6 +594,7 @@ async function init() {
   document.getElementById('loader').classList.add('hidden');
   populateMySelect();
   render();
+  checkUrlParams();
 }
 
 // ============================================================
@@ -1334,6 +1357,74 @@ async function deleteContenido(id) {
       });
     } catch (err) {
       console.error('Error deleting contenido:', err);
+    }
+  }
+}
+
+// ============================================================
+//  SHARE
+// ============================================================
+async function shareAsImage() {
+  const btn = document.getElementById('btn-share-img');
+  const feedback = document.getElementById('share-feedback');
+  btn.disabled = true;
+  feedback.textContent = 'Generando imagen...';
+
+  try {
+    const captureEl = document.getElementById('modal-capture');
+    const canvas = await html2canvas(captureEl, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+
+    const link = document.createElement('a');
+    const d = new Date(modalDate + 'T12:00:00');
+    const fileName = `turno_${modalTurno}_${d.getDate()}-${MONTHS[d.getMonth()]}.png`;
+    link.download = fileName;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+
+    feedback.textContent = 'Imagen descargada';
+    setTimeout(() => { feedback.textContent = ''; }, 3000);
+  } catch (err) {
+    console.error('Error generating image:', err);
+    feedback.textContent = 'Error al generar imagen';
+    setTimeout(() => { feedback.textContent = ''; }, 3000);
+  }
+
+  btn.disabled = false;
+}
+
+function copyShareLink() {
+  const feedback = document.getElementById('share-feedback');
+  const baseUrl = window.location.origin + window.location.pathname;
+  const url = `${baseUrl}?fecha=${modalDate}&turno=${modalTurno}`;
+
+  navigator.clipboard.writeText(url).then(() => {
+    feedback.textContent = 'Link copiado al portapapeles';
+    setTimeout(() => { feedback.textContent = ''; }, 3000);
+  }).catch(() => {
+    const input = document.createElement('input');
+    input.value = url;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+    feedback.textContent = 'Link copiado al portapapeles';
+    setTimeout(() => { feedback.textContent = ''; }, 3000);
+  });
+}
+
+function checkUrlParams() {
+  const params = new URLSearchParams(window.location.search);
+  const fecha = params.get('fecha');
+  const turno = params.get('turno');
+  if (fecha && turno) {
+    const shifts = state.shifts.filter(s => s.date === fecha && s.turno === turno.toUpperCase());
+    if (shifts.length) {
+      openDayDetail(fecha, turno.toUpperCase());
     }
   }
 }
