@@ -1371,16 +1371,40 @@ async function shareAsImage() {
   feedback.textContent = 'Generando imagen...';
 
   try {
+    const modal = document.querySelector('.modal');
+    const origMaxH = modal.style.maxHeight;
+    const origOverflow = modal.style.overflow;
+    modal.style.maxHeight = 'none';
+    modal.style.overflow = 'visible';
+
     const captureEl = document.getElementById('modal-capture');
+    captureEl.style.padding = '8px 4px 16px';
+
+    const d = new Date(modalDate + 'T12:00:00');
+    const fechaCorta = `${d.getDate()} de ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+    const footer = document.createElement('div');
+    footer.id = 'capture-footer';
+    footer.style.cssText = 'text-align:center;padding:14px 0 4px;border-top:1px solid #EDE9E0;margin-top:14px;font-size:11px;color:#78716C;font-family:DM Sans,sans-serif;';
+    footer.textContent = `Turnos · Templo Alabanza Panamá · ${fechaCorta}`;
+    captureEl.appendChild(footer);
+
+    await new Promise(r => setTimeout(r, 50));
+
     const canvas = await html2canvas(captureEl, {
       backgroundColor: '#ffffff',
       scale: 2,
       useCORS: true,
       logging: false,
+      windowWidth: captureEl.scrollWidth + 40,
+      windowHeight: captureEl.scrollHeight + 40,
     });
 
+    footer.remove();
+    captureEl.style.padding = '';
+    modal.style.maxHeight = origMaxH;
+    modal.style.overflow = origOverflow;
+
     const link = document.createElement('a');
-    const d = new Date(modalDate + 'T12:00:00');
     const fileName = `turno_${modalTurno}_${d.getDate()}-${MONTHS[d.getMonth()]}.png`;
     link.download = fileName;
     link.href = canvas.toDataURL('image/png');
