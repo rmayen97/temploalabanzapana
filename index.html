@@ -569,7 +569,10 @@
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbwkXLnhM0bnqmzuxMxStqAEDIG0ijDAruP_TOkNmO5QvDQ0KZdaBAEp6XD9FFVtKnYA7g/exec";
-const ADMIN_PASSWORD = "alabanza2024";
+
+function getAdminPassword() {
+  return sessionStorage.getItem('adminPass') || '';
+}
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAYS_SHORT = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -597,7 +600,7 @@ const COLOR_MAP = [
 let state = {
   view: 'semanal',
   myVolunteerId: localStorage.getItem('myVolunteerId') || '',
-  isAdmin: sessionStorage.getItem('adminAuth') === '1',
+  isAdmin: sessionStorage.getItem('adminAuth') === '1' && !!sessionStorage.getItem('adminPass'),
   weekStart: getMonday(new Date()),
   calYear: new Date().getFullYear(),
   calMonth: new Date().getMonth(),
@@ -826,6 +829,7 @@ function updateAdminBadge() {
 function logoutAdmin() {
   state.isAdmin = false;
   sessionStorage.removeItem('adminAuth');
+  sessionStorage.removeItem('adminPass');
   updateAdminBadge();
 }
 
@@ -1473,18 +1477,36 @@ function checkAdminPassword() {
   const input = document.getElementById('assign-password-input').value;
   const msg = document.getElementById('assign-pass-msg');
 
-  if (input === ADMIN_PASSWORD) {
-    state.isAdmin = true;
-    sessionStorage.setItem('adminAuth', '1');
-    msg.className = 'form-msg success';
-    msg.textContent = 'Acceso concedido';
-    setTimeout(() => showAssignForm(), 300);
-  } else {
+  if (!input) {
     msg.className = 'form-msg error';
-    msg.textContent = 'Contraseña incorrecta';
-    document.getElementById('assign-password-input').value = '';
-    document.getElementById('assign-password-input').focus();
+    msg.textContent = 'Ingresa una contraseña.';
+    return;
   }
+
+  msg.className = 'form-msg';
+  msg.textContent = 'Verificando...';
+
+  fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'addTurno', password: input, fecha: '', turno: 'AM', colaboradorId: '', rol: 'test' }),
+  }).then(res => res.json()).then(data => {
+    if (data.unauthorized) {
+      msg.className = 'form-msg error';
+      msg.textContent = 'Contraseña incorrecta';
+      document.getElementById('assign-password-input').value = '';
+      document.getElementById('assign-password-input').focus();
+    } else {
+      sessionStorage.setItem('adminPass', input);
+      state.isAdmin = true;
+      sessionStorage.setItem('adminAuth', '1');
+      msg.className = 'form-msg success';
+      msg.textContent = 'Acceso concedido';
+      setTimeout(() => showAssignForm(), 300);
+    }
+  }).catch(() => {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Error de conexión';
+  });
 }
 
 function closeAssignModal(e) {
@@ -1542,6 +1564,7 @@ async function submitShiftAssign() {
         method: 'POST',
         body: JSON.stringify({
           action: 'addTurno',
+          password: getAdminPassword(),
           fecha: date,
           turno,
           colaboradorId: collabId,
@@ -1606,6 +1629,7 @@ async function saveShiftEdit(shiftId) {
         method: 'POST',
         body: JSON.stringify({
           action: 'editTurno',
+          password: getAdminPassword(),
           turnoId: shiftId,
           fecha: date,
           turno,
@@ -1636,7 +1660,7 @@ async function removeShift(shiftId) {
     try {
       await fetch(API_URL, {
         method: 'POST',
-        body: JSON.stringify({ action: 'deleteTurno', turnoId: shiftId }),
+        body: JSON.stringify({ action: 'deleteTurno', password: getAdminPassword(), turnoId: shiftId }),
       });
     } catch (err) {
       console.error('Error removing shift:', err);
