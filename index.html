@@ -77,6 +77,8 @@
   .grid-cell .cell-hover { position: absolute; inset: 0; background: rgba(27,94,75,0.08); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; pointer-events: none; border-radius: 2px; }
   .grid-cell:hover .cell-hover { opacity: 1; }
   .cell-hover-label { background: var(--forest); color: white; font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 6px; pointer-events: none; }
+  .cell-add-btn { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: var(--forest); color: white; font-size: 14px; font-weight: 300; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; cursor: pointer; pointer-events: none; }
+  .grid-cell:hover .cell-add-btn { opacity: 1; pointer-events: all; }
   .week-grid > .grid-cell:nth-last-child(-n+8) { border-bottom: none; }
   .week-grid > .grid-turno-label:nth-last-child(-n+8) { border-bottom: none; }
 
@@ -86,6 +88,22 @@
   .person-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .person-roles { font-size: 10px; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .empty-cell { color: var(--ink-muted); font-size: 11px; font-style: italic; opacity: 0.5; margin: auto; }
+  .empty-add { cursor: pointer; font-size: 20px; font-weight: 300; color: var(--forest); opacity: 0.3; transition: opacity 0.15s; }
+  .empty-cell:hover .empty-add { opacity: 1; }
+
+  /* ASSIGN SHIFT MODAL */
+  .assign-modal-bg { position: fixed; inset: 0; background: rgba(28,25,23,0.45); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+  .assign-modal-bg.open { opacity: 1; pointer-events: all; }
+  .assign-modal { background: white; border-radius: 16px; width: 100%; max-width: 440px; padding: 1.75rem; transform: translateY(12px); transition: transform 0.18s; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .assign-modal-bg.open .assign-modal { transform: translateY(0); }
+  .assign-modal-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; }
+  .assign-form .form-group { margin-bottom: 1rem; }
+  .assign-form .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn-submit-assign { width: 100%; padding: 11px; background: var(--forest); color: white; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.12s; margin-top: 4px; }
+  .btn-submit-assign:hover { background: #145240; }
+  .btn-submit-assign:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-cancel-assign { width: 100%; padding: 10px; background: none; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; color: var(--ink-muted); transition: background 0.12s; margin-top: 8px; }
+  .btn-cancel-assign:hover { background: var(--cream); }
 
   /* MI TURNO */
   .my-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 1.5rem; box-shadow: var(--shadow); display: flex; align-items: center; gap: 16px; border-left: 4px solid var(--forest); }
@@ -249,6 +267,23 @@
   .btn-share-icon { font-size: 15px; }
   .btn-share-feedback { font-size: 11px; text-align: center; margin-top: 6px; min-height: 16px; color: var(--forest); font-weight: 500; }
 
+  /* SHIFT EDIT INLINE */
+  .detail-field.editing { padding: 12px; background: var(--cream); border-radius: 10px; border: 1px dashed var(--border); }
+  .shift-edit-form { display: flex; flex-direction: column; gap: 8px; }
+  .shift-edit-form .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .shift-edit-row label { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); margin-bottom: 4px; }
+  .shift-edit-row input, .shift-edit-row select { width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: white; }
+  .shift-edit-row input:focus, .shift-edit-row select:focus { border-color: var(--forest); outline: none; }
+  .shift-edit-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .btn-save-shift { flex: 1; padding: 8px 12px; background: var(--forest); color: white; border: none; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 0.12s; }
+  .btn-save-shift:hover { background: #145240; }
+  .btn-cancel-shift { padding: 8px 12px; background: none; border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; color: var(--ink-muted); transition: background 0.12s; }
+  .btn-cancel-shift:hover { background: white; }
+  .btn-remove-shift { flex: 1; padding: 8px 12px; background: none; border: 1px solid var(--red-light); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; color: var(--red); transition: background 0.12s; }
+  .btn-remove-shift:hover { background: var(--red-light); }
+  .detail-field .edit-shift-btn { background: none; border: 1px solid var(--border); border-radius: 50%; width: 26px; height: 26px; font-size: 12px; cursor: pointer; color: var(--ink-muted); display: flex; align-items: center; justify-content: center; transition: all 0.12s; flex-shrink: 0; }
+  .detail-field .edit-shift-btn:hover { background: var(--forest); color: white; border-color: var(--forest); }
+
   /* RESPONSIVE */
   @media (max-width: 768px) {
     .week-grid { grid-template-columns: 44px repeat(7, 1fr); font-size: 12px; }
@@ -273,6 +308,36 @@
     .my-card { flex-direction: column; text-align: center; gap: 10px; }
     .my-card-stats { justify-content: center; }
   }
+
+  /* VOLUNTEER MODAL */
+  .volunteer-modal { position: fixed; inset: 0; background: var(--cream); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1.5rem; transition: opacity 0.3s, visibility 0.3s; }
+  .volunteer-modal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+  .volunteer-modal-content { background: white; border-radius: 20px; width: 100%; max-width: 520px; padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.12); }
+  .volunteer-modal-header { text-align: center; margin-bottom: 1.5rem; }
+  .volunteer-modal-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--forest); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; }
+  .volunteer-modal-icon::after { content: ''; width: 20px; height: 20px; border: 2px solid white; border-radius: 50%; }
+  .volunteer-modal-header h2 { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 500; margin-bottom: 6px; color: var(--ink); }
+  .volunteer-modal-header p { font-size: 14px; color: var(--ink-muted); }
+  .volunteer-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 1.5rem; max-height: 320px; overflow-y: auto; padding: 2px; }
+  .volunteer-card { background: var(--cream); border: 2px solid transparent; border-radius: 12px; padding: 12px; text-align: center; cursor: pointer; transition: all 0.15s; }
+  .volunteer-card:hover { background: var(--cream-dark); transform: translateY(-1px); }
+  .volunteer-card.selected { border-color: var(--forest); background: var(--forest-light); }
+  .volunteer-card-avatar { width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: white; }
+  .volunteer-card-name { font-size: 13px; font-weight: 500; color: var(--ink); line-height: 1.2; }
+  .volunteer-card-role { font-size: 11px; color: var(--ink-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .volunteer-modal-footer { display: flex; flex-direction: column; gap: 8px; }
+  .btn-continue { width: 100%; padding: 12px; background: var(--forest); color: white; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500; cursor: pointer; transition: all 0.15s; }
+  .btn-continue:hover:not(:disabled) { background: #145240; }
+  .btn-continue:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-skip { width: 100%; padding: 10px; background: none; border: none; color: var(--ink-muted); font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; transition: color 0.12s; }
+  .btn-skip:hover { color: var(--ink); }
+
+  .change-user-btn { position: fixed; bottom: 20px; right: 20px; background: var(--ink); color: var(--cream); border: none; border-radius: 24px; padding: 8px 16px; font-family: 'DM Sans', sans-serif; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: var(--shadow); transition: all 0.15s; z-index: 50; }
+  .change-user-btn:hover { background: var(--forest); transform: translateY(-1px); }
+
+  .admin-badge { position: fixed; bottom: 20px; right: 170px; background: var(--amber); color: white; border: none; border-radius: 24px; padding: 8px 14px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: var(--shadow); transition: all 0.15s; z-index: 50; }
+  .admin-badge:hover { background: #B45309; transform: translateY(-1px); }
+
   @media (max-width: 480px) {
     .week-grid { grid-template-columns: 36px repeat(7, 1fr); }
     .day-name { font-size: 9px; }
@@ -283,11 +348,41 @@
     .grid-cell { min-height: 56px; gap: 2px; }
     .team-grid { grid-template-columns: 1fr; }
     .cal-cell { min-height: 65px; padding: 4px; }
+    .volunteer-modal-content { padding: 1.5rem; }
+    .volunteer-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); max-height: 240px; }
+    .volunteer-modal-header h2 { font-size: 20px; }
+    .detail-field .edit-shift-btn { width: 22px; height: 22px; }
+    .detail-field .edit-shift-btn svg { width: 11px; height: 11px; }
+    .admin-badge { right: 130px; font-size: 11px; padding: 7px 12px; }
   }
 </style>
 </head>
 <body>
+<!-- Modal de Selección de Voluntario -->
+<div class="volunteer-modal" id="volunteer-modal">
+  <div class="volunteer-modal-content">
+    <div class="volunteer-modal-header">
+      <div class="volunteer-modal-icon"></div>
+      <h2>¿Quién eres?</h2>
+      <p>Selecciona tu nombre para ver tus turnos</p>
+    </div>
+    <div class="volunteer-grid" id="volunteer-grid"></div>
+    <div class="volunteer-modal-footer">
+      <button class="btn-continue" id="volunteer-continue-btn" disabled onclick="confirmVolunteer()">Continuar</button>
+      <button class="btn-skip" id="volunteer-skip-btn" onclick="skipVolunteer()">Continuar sin seleccionar</button>
+    </div>
+  </div>
+</div>
 
+<!-- Botón flotante para cambiar de usuario -->
+<button class="change-user-btn" id="change-user-btn" style="display: none;" onclick="openVolunteerModal()" title="Cambiar de usuario">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  Cambiar
+</button>
+<button class="admin-badge" id="admin-badge" style="display: none;" onclick="logoutAdmin()" title="Cerrar sesión de administrador">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+  Admin
+</button>
 <div class="loader-overlay" id="loader">
   <div class="loader-spinner"></div>
   <div class="loader-text">Cargando turnos...</div>
@@ -328,6 +423,9 @@
         <button class="nav-btn" onclick="changeWeek(-1)">&#8592;</button>
         <button class="today-btn" onclick="goThisWeek()">Esta semana</button>
         <button class="nav-btn" onclick="changeWeek(1)">&#8594;</button>
+        <button class="today-btn" onclick="openAssignShiftModal()" id="btn-assign-nav" style="background:var(--forest);color:white;border-color:var(--forest);font-weight:500;">
+          <span style="font-size:15px;line-height:1">+</span> Asignar
+        </button>
       </div>
     </div>
     <div class="week-grid" id="week-grid"></div>
@@ -398,6 +496,57 @@
 
 </div>
 
+<!-- ASSIGN SHIFT MODAL -->
+<div class="assign-modal-bg" id="assign-modal" onclick="closeAssignModal(event)">
+  <div class="assign-modal">
+    <div class="assign-modal-title" id="assign-modal-title">Asignar turno</div>
+    <div id="assign-password-section">
+      <div style="text-align:center;padding:0.5rem 0 1rem;">
+        <div style="font-size:13px;color:var(--ink-muted);margin-bottom:12px;">Ingresa la contraseña de administrador</div>
+        <div style="display:flex;gap:8px;max-width:280px;margin:0 auto;">
+          <input class="form-input" id="assign-password-input" type="password" placeholder="Contraseña" onkeydown="if(event.key==='Enter')checkAdminPassword()" />
+          <button class="btn-submit-assign" style="width:auto;white-space:nowrap;margin:0;" onclick="checkAdminPassword()">Entrar</button>
+        </div>
+        <div class="form-msg" id="assign-pass-msg" style="font-size:11px;min-height:14px;margin-top:8px;"></div>
+      </div>
+    </div>
+    <div id="assign-form-section" style="display:none;">
+      <div class="assign-form">
+      <div class="form-group">
+        <label class="form-label">Voluntario</label>
+        <select class="form-select" id="assign-collab">
+          <option value="">Seleccionar...</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha</label>
+          <input class="form-input" type="date" id="assign-date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Turno</label>
+          <select class="form-select" id="assign-turno">
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rol</label>
+        <input class="form-input" id="assign-rol" type="text" placeholder="ej. Guitarra, Voz Lead..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notas (opcional)</label>
+        <input class="form-input" id="assign-notas" type="text" placeholder="ej. Traer amplificador" />
+      </div>
+      <button class="btn-submit-assign" id="assign-submit-btn" onclick="submitShiftAssign()">Asignar</button>
+      <div class="form-msg" id="assign-msg"></div>
+      <button class="btn-cancel-assign" onclick="closeAssignModal()">Cancelar</button>
+    </div>
+    </div>
+  </div>
+</div>
+
 <!-- DETAIL MODAL -->
 <div class="modal-bg" id="detail-modal" onclick="closeModal(event)">
   <div class="modal">
@@ -420,6 +569,7 @@
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbwkXLnhM0bnqmzuxMxStqAEDIG0ijDAruP_TOkNmO5QvDQ0KZdaBAEp6XD9FFVtKnYA7g/exec";
+const ADMIN_PASSWORD = "alabanza2024";
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAYS_SHORT = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -447,6 +597,7 @@ const COLOR_MAP = [
 let state = {
   view: 'semanal',
   myVolunteerId: localStorage.getItem('myVolunteerId') || '',
+  isAdmin: sessionStorage.getItem('adminAuth') === '1',
   weekStart: getMonday(new Date()),
   calYear: new Date().getFullYear(),
   calMonth: new Date().getMonth(),
@@ -540,6 +691,8 @@ async function init() {
     document.getElementById('loader').classList.add('hidden');
     loadDemoData();
     render();
+    populateMySelect();
+    checkVolunteerModal();
     return;
   }
 
@@ -595,6 +748,7 @@ async function init() {
   populateMySelect();
   render();
   checkUrlParams();
+  checkVolunteerModal();
 }
 
 // ============================================================
@@ -611,6 +765,79 @@ function setMyVolunteer(id) {
   if (id) localStorage.setItem('myVolunteerId', id);
   else localStorage.removeItem('myVolunteerId');
   render();
+}
+
+// ============================================================
+//  VOLUNTEER SELECTION MODAL
+// ============================================================
+let selectedVolunteerId = '';
+
+function openVolunteerModal() {
+  selectedVolunteerId = state.myVolunteerId;
+  const modal = document.getElementById('volunteer-modal');
+  const grid = document.getElementById('volunteer-grid');
+  const continueBtn = document.getElementById('volunteer-continue-btn');
+
+  grid.innerHTML = state.collaborators.map(c => {
+    const isSelected = c.id === selectedVolunteerId;
+    return `<div class="volunteer-card${isSelected ? ' selected' : ''}" onclick="selectVolunteer('${c.id}', this)">
+      <div class="volunteer-card-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
+      <div class="volunteer-card-name">${c.name}</div>
+      <div class="volunteer-card-role">${c.roles.split(',')[0].trim()}</div>
+    </div>`;
+  }).join('');
+
+  continueBtn.disabled = !selectedVolunteerId;
+  modal.classList.remove('hidden');
+}
+
+function selectVolunteer(id, el) {
+  selectedVolunteerId = id;
+  document.querySelectorAll('.volunteer-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('volunteer-continue-btn').disabled = false;
+}
+
+function confirmVolunteer() {
+  if (!selectedVolunteerId) return;
+  state.myVolunteerId = selectedVolunteerId;
+  localStorage.setItem('myVolunteerId', selectedVolunteerId);
+  document.getElementById('volunteer-modal').classList.add('hidden');
+  document.getElementById('my-volunteer').value = selectedVolunteerId;
+  document.getElementById('change-user-btn').style.display = 'flex';
+  updateAdminBadge();
+  render();
+}
+
+function skipVolunteer() {
+  state.myVolunteerId = '';
+  localStorage.removeItem('myVolunteerId');
+  document.getElementById('volunteer-modal').classList.add('hidden');
+  document.getElementById('my-volunteer').value = '';
+  document.getElementById('change-user-btn').style.display = 'flex';
+  updateAdminBadge();
+  render();
+}
+
+function updateAdminBadge() {
+  document.getElementById('admin-badge').style.display = state.isAdmin ? 'flex' : 'none';
+}
+
+function logoutAdmin() {
+  state.isAdmin = false;
+  sessionStorage.removeItem('adminAuth');
+  updateAdminBadge();
+}
+
+function checkVolunteerModal() {
+  if (!state.collaborators.length) return;
+  updateAdminBadge();
+  if (!state.myVolunteerId) {
+    openVolunteerModal();
+  } else {
+    document.getElementById('volunteer-modal').classList.add('hidden');
+    document.getElementById('change-user-btn').style.display = 'flex';
+  }
 }
 
 function renderMyCard(containerId) {
@@ -803,9 +1030,10 @@ function renderWeekGrid() {
             </div>
           </div>`;
         });
-        html += '<div class="cell-hover"><span class="cell-hover-label">Ver detalles</span></div>';
+        html += `<div class="cell-hover"><span class="cell-hover-label">Ver detalles</span></div>
+        <div class="cell-add-btn" onclick="event.stopPropagation();openAssignShiftModal('${ds}','${turno}')">+</div>`;
       } else {
-        html += '<div class="empty-cell">—</div>';
+        html += `<div class="empty-cell" onclick="event.stopPropagation();openAssignShiftModal('${ds}','${turno}')"><span class="empty-add">+</span></div>`;
       }
       html += '</div>';
     });
@@ -1189,11 +1417,243 @@ async function submitAbsence() {
 }
 
 // ============================================================
+//  ASSIGN SHIFT MODAL
+// ============================================================
+function openAssignShiftModal(date, turno) {
+  if (!state.isAdmin) {
+    showAssignPasswordPrompt();
+    return;
+  }
+  showAssignForm(date, turno);
+}
+
+function showAssignPasswordPrompt() {
+  document.getElementById('assign-password-section').style.display = 'block';
+  document.getElementById('assign-form-section').style.display = 'none';
+  document.getElementById('assign-pass-msg').textContent = '';
+  document.getElementById('assign-password-input').value = '';
+
+  const titleEl = document.getElementById('assign-modal-title');
+  titleEl.textContent = 'Acceso de administrador';
+
+  document.getElementById('assign-modal').classList.add('open');
+  setTimeout(() => document.getElementById('assign-password-input').focus(), 200);
+}
+
+function showAssignForm(date, turno) {
+  document.getElementById('assign-password-section').style.display = 'none';
+  document.getElementById('assign-form-section').style.display = 'block';
+
+  const collabSelect = document.getElementById('assign-collab');
+  collabSelect.innerHTML = '<option value="">Seleccionar...</option>' +
+    state.collaborators.map(c => `<option value="${c.id}"${c.id === state.myVolunteerId ? ' selected' : ''}>${c.name}</option>`).join('');
+
+  const dateInput = document.getElementById('assign-date');
+  if (date) dateInput.value = date;
+  else dateInput.value = getNextSunday() || '';
+
+  if (turno) document.getElementById('assign-turno').value = turno;
+
+  document.getElementById('assign-rol').value = '';
+  document.getElementById('assign-notas').value = '';
+  document.getElementById('assign-msg').textContent = '';
+
+  const titleEl = document.getElementById('assign-modal-title');
+  if (date && turno) {
+    const d = new Date(date + 'T12:00:00');
+    titleEl.textContent = `Asignar — ${turno} · ${DAYS_SHORT[d.getDay()]} ${d.getDate()}`;
+  } else {
+    titleEl.textContent = 'Asignar turno';
+  }
+
+  document.getElementById('assign-modal').classList.add('open');
+}
+
+function checkAdminPassword() {
+  const input = document.getElementById('assign-password-input').value;
+  const msg = document.getElementById('assign-pass-msg');
+
+  if (input === ADMIN_PASSWORD) {
+    state.isAdmin = true;
+    sessionStorage.setItem('adminAuth', '1');
+    msg.className = 'form-msg success';
+    msg.textContent = 'Acceso concedido';
+    setTimeout(() => showAssignForm(), 300);
+  } else {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Contraseña incorrecta';
+    document.getElementById('assign-password-input').value = '';
+    document.getElementById('assign-password-input').focus();
+  }
+}
+
+function closeAssignModal(e) {
+  if (!e || e.target === document.getElementById('assign-modal')) {
+    document.getElementById('assign-modal').classList.remove('open');
+    document.getElementById('assign-pass-msg').textContent = '';
+    document.getElementById('assign-password-input').value = '';
+  }
+}
+
+async function submitShiftAssign() {
+  const collabId = document.getElementById('assign-collab').value;
+  const date = document.getElementById('assign-date').value;
+  const turno = document.getElementById('assign-turno').value;
+  const rol = document.getElementById('assign-rol').value.trim();
+  const notas = document.getElementById('assign-notas').value.trim();
+  const msg = document.getElementById('assign-msg');
+  const btn = document.getElementById('assign-submit-btn');
+
+  if (!collabId) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Selecciona un voluntario.';
+    return;
+  }
+  if (!date) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Selecciona una fecha.';
+    return;
+  }
+  if (!rol) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Indica el rol.';
+    return;
+  }
+
+  btn.disabled = true;
+  msg.className = 'form-msg';
+  msg.textContent = 'Guardando...';
+
+  const newShift = {
+    id: String(Date.now()),
+    date,
+    turno,
+    collabId,
+    rol,
+    notas,
+  };
+
+  state.shifts.push(newShift);
+  document.getElementById('assign-modal').classList.remove('open');
+
+  if (API_URL && API_URL !== 'TU_URL_AQUI') {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'addTurno',
+          fecha: date,
+          turno,
+          colaboradorId: collabId,
+          rol,
+          notas,
+        }),
+      });
+    } catch (err) {
+      console.error('Error saving shift:', err);
+    }
+  }
+
+  render();
+}
+
+// ============================================================
+//  EDIT / REMOVE SHIFT
+// ============================================================
+function editShift(shiftId) {
+  if (!state.isAdmin) {
+    openAssignShiftModal();
+    return;
+  }
+  editingShiftId = shiftId;
+  renderModalBody();
+}
+
+function cancelShiftEdit() {
+  editingShiftId = '';
+  renderModalBody();
+}
+
+async function saveShiftEdit(shiftId) {
+  const collabId = document.getElementById('edit-s-collab').value;
+  const date = document.getElementById('edit-s-date').value;
+  const turno = document.getElementById('edit-s-turno').value;
+  const rol = document.getElementById('edit-s-rol').value.trim();
+  const notas = document.getElementById('edit-s-notas').value.trim();
+  const msg = document.getElementById('shift-edit-msg');
+
+  if (!collabId || !date || !rol) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Completa los campos obligatorios.';
+    return;
+  }
+
+  const shift = state.shifts.find(s => s.id === shiftId);
+  if (!shift) return;
+
+  shift.collabId = collabId;
+  shift.date = date;
+  shift.turno = turno;
+  shift.rol = rol;
+  shift.notas = notas;
+
+  msg.className = 'form-msg';
+  msg.textContent = 'Guardando...';
+
+  if (API_URL && API_URL !== 'TU_URL_AQUI') {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'editTurno',
+          turnoId: shiftId,
+          fecha: date,
+          turno,
+          colaboradorId: collabId,
+          rol,
+          notas,
+        }),
+      });
+    } catch (err) {
+      console.error('Error editing shift:', err);
+    }
+  }
+
+  editingShiftId = '';
+  renderModalBody();
+}
+
+async function removeShift(shiftId) {
+  if (!state.isAdmin) {
+    openAssignShiftModal();
+    return;
+  }
+  if (!confirm('¿Eliminar este turno?')) return;
+
+  state.shifts = state.shifts.filter(s => s.id !== shiftId);
+
+  if (API_URL && API_URL !== 'TU_URL_AQUI') {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'deleteTurno', turnoId: shiftId }),
+      });
+    } catch (err) {
+      console.error('Error removing shift:', err);
+    }
+  }
+
+  editingShiftId = '';
+  renderModalBody();
+}
+
+// ============================================================
 //  DETAIL MODAL
 // ============================================================
 let modalEditMode = false;
 let modalDate = '';
 let modalTurno = '';
+let editingShiftId = '';
 
 function openDayDetail(dateStr, turno) {
   const shifts = state.shifts.filter(s => s.date === dateStr && s.turno === turno);
@@ -1226,15 +1686,59 @@ function renderModalBody() {
     const c = getCollab(s.collabId);
     if (!c) return '';
     const isAbsent = state.ausencias.some(a => a.date === modalDate && a.collabId === s.collabId && (a.turno === modalTurno || a.turno === 'Ambos') && a.estado && a.estado.toLowerCase() === 'aprobada');
+    const isEditing = s.id === editingShiftId;
+
+    if (isEditing) {
+      const allOtherCollabs = state.collaborators.map(x => `<option value="${x.id}"${x.id === s.collabId ? ' selected' : ''}>${x.name}</option>`).join('');
+      return `<div class="detail-field editing">
+        <div class="shift-edit-form">
+          <div class="shift-edit-row">
+            <label>Voluntario</label>
+            <select id="edit-s-collab">${allOtherCollabs}</select>
+          </div>
+          <div class="form-row-2">
+            <div class="shift-edit-row">
+              <label>Fecha</label>
+              <input id="edit-s-date" type="date" value="${s.date}" />
+            </div>
+            <div class="shift-edit-row">
+              <label>Turno</label>
+              <select id="edit-s-turno">
+                <option value="AM"${s.turno === 'AM' ? ' selected' : ''}>AM</option>
+                <option value="PM"${s.turno === 'PM' ? ' selected' : ''}>PM</option>
+              </select>
+            </div>
+          </div>
+          <div class="shift-edit-row">
+            <label>Rol</label>
+            <input id="edit-s-rol" type="text" value="${s.rol.replace(/"/g, '&quot;')}" />
+          </div>
+          <div class="shift-edit-row">
+            <label>Notas</label>
+            <input id="edit-s-notas" type="text" value="${s.notas ? s.notas.replace(/"/g, '&quot;') : ''}" placeholder="Opcional..." />
+          </div>
+          <div class="shift-edit-actions">
+            <button class="btn-save-shift" onclick="saveShiftEdit('${s.id}')">Guardar</button>
+            <button class="btn-cancel-shift" onclick="cancelShiftEdit()">Cancelar</button>
+            <button class="btn-remove-shift" onclick="removeShift('${s.id}')">Eliminar</button>
+          </div>
+          <div class="form-msg" id="shift-edit-msg" style="font-size:11px;min-height:14px"></div>
+        </div>
+      </div>`;
+    }
+
     return `<div class="detail-field">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex};width:30px;height:30px;font-size:10px">${initials(c.name)}</div>
-        <div>
+        <div style="flex:1">
           <div style="font-weight:500;font-size:14px;${isAbsent ? 'text-decoration:line-through' : ''}">${c.name}</div>
           <div style="font-size:12px;color:var(--ink-muted)">${s.rol}</div>
           ${isAbsent ? '<div style="font-size:11px;color:var(--red);font-weight:500;margin-top:2px">AUSENTE</div>' : ''}
           ${s.notas ? `<div style="font-size:12px;color:var(--ink-muted);font-style:italic;margin-top:2px">${s.notas}</div>` : ''}
         </div>
+        <button class="edit-shift-btn" onclick="editShift('${s.id}')" title="Editar">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
       </div>
     </div>`;
   }).join('');
