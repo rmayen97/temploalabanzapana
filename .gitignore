@@ -1,0 +1,5 @@
+# Archivos de backup
+*.backup
+
+# Google Apps Script (contiene contraseña del servidor)
+appscript.js
