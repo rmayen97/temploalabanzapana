@@ -687,6 +687,9 @@
           <option value="AM">AM</option>
           <option value="PM">PM</option>
         </select>
+        <button class="today-btn" onclick="openAssignFromLista()" style="background:var(--forest);color:white;border-color:var(--forest);font-weight:500;">
+          <span style="font-size:15px;line-height:1">+</span> Asignar
+        </button>
       </div>
     </div>
     <div id="lista-table"></div>
@@ -1940,6 +1943,15 @@ function startListEdit(shiftId) {
 function cancelListEdit() {
   editingListShiftId = '';
   renderLista();
+}
+
+function openAssignFromLista() {
+  if (!state.isAdmin) { openAssignShiftModal(); return; }
+  const filterCollab = document.getElementById('lista-filter-collab').value;
+  const filterTurno = document.getElementById('lista-filter-turno').value;
+  // Pre-fill with filtered volunteer and turno
+  showAssignForm(null, filterTurno || null);
+  if (filterCollab) document.getElementById('assign-collab').value = filterCollab;
 }
 
 async function saveListEdit(shiftId) {
