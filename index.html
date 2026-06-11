@@ -1795,7 +1795,7 @@ function renderDashboard() {
   summaryHtml += `<div class="dash-stat good"><div class="dash-stat-value">${totalShifts}</div><div class="dash-stat-label">Turnos asignados</div></div>`;
   summaryHtml += `<div class="dash-stat"><div class="dash-stat-value">${activeCollabs.length}</div><div class="dash-stat-label">Voluntarios activos</div></div>`;
   summaryHtml += `<div class="dash-stat"><div class="dash-stat-value">${avgPerPerson}</div><div class="dash-stat-label">Promedio / persona</div></div>`;
-  summaryHtml += `<div class="dash-stat ${gaps.length > 0 ? 'warn' : 'good'}"><div class="dash-stat-value">${gaps.length}</div><div class="dash-stat-label">Huecos por cubrir</div></div>`;
+  summaryHtml += `<div class="dash-stat ${gaps.length > 0 ? 'warn' : 'good'}"><div class="dash-stat-value">${gaps.length}</div><div class="dash-stat-label">Turnos sin cubrir</div></div>`;
   summaryHtml += '</div>';
   document.getElementById('dashboard-summary').innerHTML = summaryHtml;
 
