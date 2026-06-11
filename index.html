@@ -127,6 +127,44 @@
   .my-upcoming-turno.turno-pm { background: var(--blue-light); color: var(--blue); }
   .my-upcoming-rol { color: var(--ink-muted); }
   .my-upcoming-when { font-size: 10px; color: var(--forest); font-weight: 500; }
+
+  /* DASHBOARD */
+  .dashboard-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .dash-stat { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; box-shadow: var(--shadow); }
+  .dash-stat-value { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 500; line-height: 1.1; }
+  .dash-stat-label { font-size: 11px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+  .dash-stat.good .dash-stat-value { color: var(--forest); }
+  .dash-stat.warn .dash-stat-value { color: var(--amber); }
+  .dash-stat.bad .dash-stat-value { color: var(--red); }
+  .dashboard-load-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
+  .dash-volunteer { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; display: flex; align-items: center; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); transition: all 0.15s; }
+  .dash-volunteer:hover { box-shadow: var(--shadow); }
+  .dash-vol-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: white; flex-shrink: 0; }
+  .dash-vol-info { flex: 1; min-width: 0; }
+  .dash-vol-name { font-weight: 500; font-size: 14px; }
+  .dash-vol-roles { font-size: 11px; color: var(--ink-muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dash-vol-bar-wrap { flex: 2; min-width: 120px; }
+  .dash-vol-bar { height: 22px; border-radius: 6px; background: var(--cream); overflow: hidden; position: relative; }
+  .dash-vol-bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; min-width: 24px; }
+  .dash-vol-am { position: absolute; left: 4px; top: 50%; transform: translateY(-50%); font-size: 9px; font-weight: 600; z-index: 1; }
+  .dash-vol-pm { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); font-size: 9px; font-weight: 600; z-index: 1; }
+  .dash-vol-count { text-align: right; flex-shrink: 0; }
+  .dash-vol-num { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; line-height: 1; }
+  .dash-vol-label { font-size: 10px; color: var(--ink-muted); }
+  .dash-gaps { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow); }
+  .dash-gaps-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 500; margin-bottom: 12px; }
+  .dash-gap-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .dash-gap-item:last-child { border-bottom: none; }
+  .dash-gap-date { font-weight: 600; min-width: 100px; }
+  .dash-gap-detail { color: var(--ink-muted); }
+  .dash-gap-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 10px; }
+  .dash-no-gaps { text-align: center; padding: 1rem; color: var(--forest); font-size: 13px; font-weight: 500; }
+  @media (max-width: 768px) {
+    .dash-volunteer { flex-wrap: wrap; gap: 8px; }
+    .dash-vol-bar-wrap { flex: 100%; min-width: 0; }
+    .dashboard-summary { grid-template-columns: 1fr 1fr; }
+  }
+
   .person-card.dimmed { opacity: 0.3; }
   .person-card.highlighted { outline: 2px solid var(--forest); outline-offset: -1px; }
   .mc-person.dimmed { opacity: 0.3; }
@@ -501,6 +539,7 @@
     <button class="tab-btn active" onclick="switchView('semanal')">Semanal</button>
     <button class="tab-btn" onclick="switchView('mensual')">Mensual</button>
     <button class="tab-btn" onclick="switchView('ausencias')">Ausencias</button>
+    <button class="tab-btn" onclick="switchView('dashboard')">Dashboard</button>
     <select class="my-select" id="my-volunteer" onchange="setMyVolunteer(this.value)">
       <option value="">Todos</option>
     </select>
@@ -596,6 +635,22 @@
         <div id="absence-list"></div>
       </div>
     </div>
+  </div>
+
+  <!-- ==================== DASHBOARD ==================== -->
+  <div class="view-panel" id="view-dashboard">
+    <div class="nav-bar">
+      <div class="nav-title"><em>Dashboard</em> Carga del Equipo</div>
+      <div class="nav-controls">
+        <select class="my-select" id="dashboard-range" onchange="renderDashboard()" style="background:white;color:var(--ink);border-color:var(--border);">
+          <option value="4">4 semanas</option>
+          <option value="8" selected>8 semanas</option>
+        </select>
+      </div>
+    </div>
+    <div id="dashboard-summary"></div>
+    <div id="dashboard-grid"></div>
+    <div id="dashboard-gaps"></div>
   </div>
 
 </div>
@@ -1167,6 +1222,8 @@ function render() {
   } else if (state.view === 'ausencias') {
     renderAbsenceForm();
     renderAbsenceList();
+  } else if (state.view === 'dashboard') {
+    renderDashboard();
   }
 }
 
@@ -1624,6 +1681,109 @@ async function submitAbsence() {
 
   if (state.view === 'semanal') { renderWeekGrid(); renderNextService('next-service-semanal'); }
   if (state.view === 'mensual') renderNextService('next-service-mensual');
+}
+
+// ============================================================
+//  DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const weeks = parseInt(document.getElementById('dashboard-range').value) || 8;
+  const today = todayStr();
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + weeks * 7);
+  const endStr = dateToStr(endDate);
+
+  const periodShifts = state.shifts.filter(s => s.date >= today && s.date < endStr);
+  const activeCollabs = state.collaborators.filter(c => c.id !== '11'); // exclude ENSAYO
+
+  // Summary
+  const totalShifts = periodShifts.length;
+  const totalTurnos = [...new Set(periodShifts.map(s => s.date + s.turno))].length;
+  const avgPerPerson = activeCollabs.length ? (totalShifts / activeCollabs.length).toFixed(1) : '0';
+  const maxShifts = Math.max(...activeCollabs.map(c => periodShifts.filter(s => s.collabId === c.id).length), 0);
+
+  // Find gaps (Sundays with <4 people in any turno)
+  const gaps = [];
+  const allDates = [...new Set(periodShifts.map(s => s.date))].sort();
+  allDates.forEach(ds => {
+    const d = new Date(ds + 'T12:00:00');
+    if (d.getDay() !== 0) return;
+    ['AM', 'PM'].forEach(turno => {
+      const count = periodShifts.filter(s => s.date === ds && s.turno === turno).length;
+      if (count < 4) {
+        gaps.push({ date: ds, turno, count, needed: 4 - count, dayName: `${d.getDate()}/${d.getMonth()+1}` });
+      }
+    });
+  });
+  gaps.sort((a, b) => a.date.localeCompare(b.date));
+
+  // Summary HTML
+  let summaryHtml = '<div class="dashboard-summary">';
+  summaryHtml += `<div class="dash-stat good"><div class="dash-stat-value">${totalShifts}</div><div class="dash-stat-label">Turnos asignados</div></div>`;
+  summaryHtml += `<div class="dash-stat"><div class="dash-stat-value">${activeCollabs.length}</div><div class="dash-stat-label">Voluntarios activos</div></div>`;
+  summaryHtml += `<div class="dash-stat"><div class="dash-stat-value">${avgPerPerson}</div><div class="dash-stat-label">Promedio / persona</div></div>`;
+  summaryHtml += `<div class="dash-stat ${gaps.length > 0 ? 'warn' : 'good'}"><div class="dash-stat-value">${gaps.length}</div><div class="dash-stat-label">Huecos por cubrir</div></div>`;
+  summaryHtml += '</div>';
+  document.getElementById('dashboard-summary').innerHTML = summaryHtml;
+
+  // Volunteer load bars
+  let gridHtml = '<div class="section-title">Carga por voluntario <span>— próximas ' + weeks + ' semanas</span></div>';
+  gridHtml += '<div class="dashboard-load-grid">';
+
+  activeCollabs.forEach(c => {
+    const myShifts = periodShifts.filter(s => s.collabId === c.id);
+    const amCount = myShifts.filter(s => s.turno === 'AM').length;
+    const pmCount = myShifts.filter(s => s.turno === 'PM').length;
+    const total = myShifts.length;
+    const pct = maxShifts > 0 ? Math.round((total / maxShifts) * 100) : 0;
+
+    let barColor = 'var(--forest)';
+    let loadClass = 'good';
+    if (total === 0) { barColor = 'var(--ink-muted)'; loadClass = ''; }
+    else if (total >= 8) { barColor = 'var(--amber)'; loadClass = 'warn'; }
+    else if (total >= 12) { barColor = 'var(--red)'; loadClass = 'bad'; }
+
+    const roleText = c.roles.split(',')[0].trim();
+
+    gridHtml += `<div class="dash-volunteer">
+      <div class="dash-vol-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
+      <div class="dash-vol-info">
+        <div class="dash-vol-name">${c.name}</div>
+        <div class="dash-vol-roles">${roleText}</div>
+      </div>
+      <div class="dash-vol-bar-wrap">
+        <div class="dash-vol-bar">
+          <div class="dash-vol-bar-fill" style="width:${pct}%;background:${barColor}">
+            ${total > 0 ? total : ''}
+          </div>
+          ${amCount > 0 ? `<span class="dash-vol-am" style="color:var(--amber)">AM:${amCount}</span>` : ''}
+          ${pmCount > 0 ? `<span class="dash-vol-pm" style="color:var(--blue)">PM:${pmCount}</span>` : ''}
+        </div>
+      </div>
+      <div class="dash-vol-count">
+        <div class="dash-vol-num" style="color:${barColor}">${total}</div>
+        <div class="dash-vol-label">turnos</div>
+      </div>
+    </div>`;
+  });
+  gridHtml += '</div>';
+  document.getElementById('dashboard-grid').innerHTML = gridHtml;
+
+  // Gaps section
+  let gapsHtml = '<div class="dash-gaps"><div class="dash-gaps-title">Domingos con espacios vacíos</div>';
+  if (gaps.length === 0) {
+    gapsHtml += '<div class="dash-no-gaps">Todos los domingos están completos</div>';
+  } else {
+    gaps.forEach(g => {
+      gapsHtml += `<div class="dash-gap-item">
+        <span class="dash-gap-date">Dom ${g.dayName}</span>
+        <span class="dash-gap-badge" style="background:${g.turno === 'AM' ? 'var(--amber-light)' : 'var(--blue-light)'};color:${g.turno === 'AM' ? 'var(--amber)' : 'var(--blue)'}">${g.turno}</span>
+        <span class="dash-gap-detail">${g.count}/4 cubierto — <strong>falta${g.needed !== 1 ? 'n' : ''} ${g.needed}</strong></span>
+      </div>`;
+    });
+  }
+  gapsHtml += '</div>';
+  document.getElementById('dashboard-gaps').innerHTML = gapsHtml;
 }
 
 // ============================================================
