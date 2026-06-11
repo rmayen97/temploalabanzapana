@@ -186,6 +186,38 @@
   .lista-edit-form select:focus, .lista-edit-form input:focus { border-color: var(--forest); outline: none; }
   .lista-empty { text-align: center; padding: 2rem; color: var(--ink-muted); font-size: 13px; }
   .lista-count { font-size: 12px; color: var(--ink-muted); margin-bottom: 0.75rem; }
+  #lista-mode-table.active, #lista-mode-cards.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+  /* LISTA CARDS / KANBAN */
+  .cards-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; -webkit-overflow-scrolling: touch; }
+  .cards-col { flex: 0 0 260px; background: var(--cream); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; display: flex; flex-direction: column; min-height: 120px; }
+  .cards-col-header { padding: 10px 12px; background: var(--ink); color: white; display: flex; align-items: center; justify-content: space-between; }
+  .cards-col-date { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 500; }
+  .cards-col-add { width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.2); color: white; border: none; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.12s; }
+  .cards-col-add:hover { background: var(--forest); }
+  .cards-col-body { padding: 8px; display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .cards-col-body.drag-over { background: var(--forest-light); }
+  .card-item { background: white; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: grab; display: flex; align-items: center; gap: 10px; transition: all 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.04); position: relative; }
+  .card-item:active { cursor: grabbing; }
+  .card-item.dragging { opacity: 0.4; transform: scale(0.95); }
+  .card-item:hover { border-color: var(--forest); transform: translateY(-1px); box-shadow: var(--shadow); }
+  .card-avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: white; flex-shrink: 0; }
+  .card-info { flex: 1; min-width: 0; }
+  .card-name { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-rol { font-size: 11px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-turno { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 8px; flex-shrink: 0; }
+  .card-turno.am { background: var(--amber-light); color: var(--amber); }
+  .card-turno.pm { background: var(--blue-light); color: var(--blue); }
+  .card-empty { text-align: center; padding: 1.5rem 1rem; color: var(--ink-muted); font-size: 12px; font-style: italic; }
+  @media (max-width: 768px) {
+    .cards-board { gap: 8px; }
+    .cards-col { flex: 0 0 220px; }
+    .card-item { padding: 8px 10px; gap: 8px; }
+    .card-avatar { width: 24px; height: 24px; font-size: 8px; }
+    .card-name { font-size: 12px; }
+    .card-rol { font-size: 10px; }
+  }
+
   @media (max-width: 768px) {
     .lista-row { grid-template-columns: 80px 40px 1fr 1fr 40px 32px; padding: 8px 10px; font-size: 11px; gap: 4px; }
     .lista-row.header { padding: 8px 10px; font-size: 10px; }
@@ -679,6 +711,8 @@
     <div class="nav-bar">
       <div class="nav-title"><em>Lista</em> de Turnos</div>
       <div class="nav-controls">
+        <button class="today-btn active" onclick="setListaMode('table')" id="lista-mode-table" style="border-radius:8px 0 0 8px;">📋 Tabla</button>
+        <button class="today-btn" onclick="setListaMode('cards')" id="lista-mode-cards" style="border-radius:0 8px 8px 0;margin-left:-1px;">🃏 Tarjetas</button>
         <select class="my-select" id="lista-filter-collab" onchange="renderLista()" style="background:white;color:var(--ink);border-color:var(--border);">
           <option value="">Todos</option>
         </select>
@@ -693,6 +727,7 @@
       </div>
     </div>
     <div id="lista-table"></div>
+    <div id="lista-cards" style="display:none;"></div>
   </div>
 
   <!-- ==================== DASHBOARD ==================== -->
@@ -1854,8 +1889,19 @@ function renderDashboard() {
 //  LISTA DE TURNOS EDITABLE
 // ============================================================
 let editingListShiftId = '';
+let listaMode = 'table'; // 'table' | 'cards'
+
+function setListaMode(mode) {
+  listaMode = mode;
+  document.getElementById('lista-mode-table').classList.toggle('active', mode === 'table');
+  document.getElementById('lista-mode-cards').classList.toggle('active', mode === 'cards');
+  renderLista();
+}
 
 function renderLista() {
+  document.getElementById('lista-table').style.display = listaMode === 'table' ? 'block' : 'none';
+  document.getElementById('lista-cards').style.display = listaMode === 'cards' ? 'block' : 'none';
+  if (listaMode === 'cards') { renderListaCards(); return; }
   // Init filter selects
   const collabSelect = document.getElementById('lista-filter-collab');
   if (!collabSelect.children.length || collabSelect.children.length === 1) {
@@ -1997,6 +2043,118 @@ async function deleteListShift(shiftId) {
   } catch (err) { console.error('Error:', err); }
 
   state.shifts = state.shifts.filter(s => s.id !== shiftId);
+  renderLista();
+}
+
+// ============================================================
+//  LISTA — VISTA TARJETAS (DRAG & DROP)
+// ============================================================
+function renderListaCards() {
+  const today = todayStr();
+  const filterCollab = document.getElementById('lista-filter-collab').value;
+  const filterTurno = document.getElementById('lista-filter-turno').value;
+
+  let shifts = state.shifts.filter(s => s.date >= today);
+  if (filterCollab) shifts = shifts.filter(s => s.collabId === filterCollab);
+  if (filterTurno) shifts = shifts.filter(s => s.turno === filterTurno);
+  shifts.sort((a, b) => a.date.localeCompare(b.date) || a.turno.localeCompare(b.turno));
+
+  // Group by date
+  const byDate = {};
+  shifts.forEach(s => {
+    if (!byDate[s.date]) byDate[s.date] = [];
+    byDate[s.date].push(s);
+  });
+
+  const dates = Object.keys(byDate).sort();
+  const el = document.getElementById('lista-cards');
+
+  if (!dates.length) {
+    el.innerHTML = '<div class="lista-table"><div class="lista-empty">No hay turnos que coincidan con los filtros.</div></div>';
+    return;
+  }
+
+  let html = `<div class="lista-count">${shifts.length} turno${shifts.length !== 1 ? 's' : ''} · ${dates.length} fecha${dates.length !== 1 ? 's' : ''}</div>`;
+  html += '<div class="cards-board">';
+
+  dates.forEach(ds => {
+    const d = new Date(ds + 'T12:00:00');
+    const fechaStr = `${DAYS_SHORT[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
+
+    html += `<div class="cards-col">
+      <div class="cards-col-header">
+        <span class="cards-col-date">${fechaStr}</span>
+        <button class="cards-col-add" onclick="openAssignShiftModal('${ds}')" title="Asignar turno">+</button>
+      </div>
+      <div class="cards-col-body" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, '${ds}')">`;
+
+    byDate[ds].forEach(s => {
+      const c = getCollab(s.collabId);
+      if (!c) return;
+      html += `<div class="card-item" draggable="true" ondragstart="handleDragStart(event, '${s.id}')" ondragend="handleDragEnd(event)">
+        <div class="card-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
+        <div class="card-info">
+          <div class="card-name">${c.name}</div>
+          <div class="card-rol">${s.rol}</div>
+        </div>
+        <span class="card-turno ${s.turno.toLowerCase()}">${s.turno}</span>
+      </div>`;
+    });
+
+    html += '</div></div>';
+  });
+
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+let draggedShiftId = '';
+
+function handleDragStart(e, shiftId) {
+  draggedShiftId = shiftId;
+  e.dataTransfer.effectAllowed = 'move';
+  e.target.classList.add('dragging');
+}
+
+function handleDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.cards-col-body').forEach(el => el.classList.remove('drag-over'));
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+async function handleDrop(e, newDate) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+
+  if (!draggedShiftId) return;
+
+  const shift = state.shifts.find(s => s.id === draggedShiftId);
+  if (!shift) return;
+
+  const oldDate = shift.date;
+  if (oldDate === newDate) return;
+
+  // Update locally
+  shift.date = newDate;
+
+  // Update in Supabase
+  try {
+    await sbFetch(`turnos?id=eq.${draggedShiftId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fecha: newDate }),
+    });
+  } catch (err) { console.error('Error moving shift:', err); }
+
+  draggedShiftId = '';
   renderLista();
 }
 
