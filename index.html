@@ -924,13 +924,14 @@ function loadDemoData() {
   state.collaborators = [
     { id:'1', name:'Will Deads',       roles:'Guitarra, Voz Lead', color: colorFromHex('#16A34A') },
     { id:'2', name:'Sherly Larios',    roles:'Voz de Apoyo',       color: colorFromHex('#2563EB') },
-    { id:'3', name:'Jonathan Castro',   roles:'Percusión',          color: colorFromHex('#DB2777') },
+    { id:'3', name:'Yonatan Castro',   roles:'Percusión',          color: colorFromHex('#DB2777') },
     { id:'4', name:'Sam Castro',        roles:'Bajo, Guitarra',     color: colorFromHex('#D97706') },
     { id:'5', name:'Herdy de León',     roles:'Voz Lead (PM), Voz de Apoyo (AM)', color: colorFromHex('#8B5CF6') },
     { id:'6', name:'Pablo de la Cruz',  roles:'Voz de Apoyo',       color: colorFromHex('#EA580C') },
     { id:'7', name:'Rodrigo Mayén',     roles:'Guitarra, Bajo',     color: colorFromHex('#06B6D4') },
-    { id:'8', name:'Raquel Orellana',   roles:'Voz Bilingüe (AM)',  color: colorFromHex('#169451') },
-    { id:'9', name:'Daniel Ajanel',     roles:'Guitarra, Bajo',     color: colorFromHex('#4F46E5') },
+    { id:'8', name:'Daniel Ajanel',     roles:'Guitarra, Voz de Apoyo', color: colorFromHex('#DC2626') },
+    { id:'9', name:'Raquel Orellana',   roles:'Voz Bilingüe (AM)',  color: colorFromHex('#C026D3') },
+    { id:'10', name:'Angely Larios',    roles:'Percusión',          color: colorFromHex('#0D9488') },
   ];
 
   // Generate shifts for the next 8 Sundays (≈2 months)
@@ -944,20 +945,20 @@ function loadDemoData() {
   // PM = servicio en español (Herdy lidera voz)
   const rotation = [
     { // Semana 1 — Will participa
-      AM: [{ collabId:'8', rol:'Voz Bilingüe' }, { collabId:'1', rol:'Guitarra, Voz Lead' }, { collabId:'4', rol:'Bajo' }, { collabId:'3', rol:'Percusión' }],
-      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'9', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }]
+      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'1', rol:'Guitarra, Voz Lead' }, { collabId:'4', rol:'Bajo' }, { collabId:'3', rol:'Percusión' }],
+      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'8', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }]
     },
     { // Semana 2 — Will participa
-      AM: [{ collabId:'8', rol:'Voz Bilingüe' }, { collabId:'9', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }, { collabId:'1', rol:'Voz de Apoyo' }],
-      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'3', rol:'Percusión' }, { collabId:'7', rol:'Guitarra' }, { collabId:'9', rol:'Bajo' }]
+      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'8', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }, { collabId:'1', rol:'Voz de Apoyo' }],
+      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'3', rol:'Percusión' }, { collabId:'7', rol:'Guitarra' }, { collabId:'8', rol:'Bajo' }]
     },
     { // Semana 3
-      AM: [{ collabId:'8', rol:'Voz Bilingüe' }, { collabId:'7', rol:'Guitarra' }, { collabId:'9', rol:'Bajo' }, { collabId:'3', rol:'Percusión' }],
+      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'7', rol:'Guitarra' }, { collabId:'8', rol:'Bajo' }, { collabId:'3', rol:'Percusión' }],
       PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'2', rol:'Voz de Apoyo' }, { collabId:'4', rol:'Guitarra' }, { collabId:'3', rol:'Percusión' }]
     },
     { // Semana 4 — Herdy apoya en AM
-      AM: [{ collabId:'8', rol:'Voz Bilingüe' }, { collabId:'9', rol:'Guitarra' }, { collabId:'7', rol:'Bajo' }, { collabId:'5', rol:'Voz de Apoyo' }],
-      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'4', rol:'Guitarra' }, { collabId:'9', rol:'Bajo' }]
+      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'8', rol:'Guitarra' }, { collabId:'7', rol:'Bajo' }, { collabId:'5', rol:'Voz de Apoyo' }],
+      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'4', rol:'Guitarra' }, { collabId:'8', rol:'Bajo' }]
     }
   ];
 
@@ -986,7 +987,7 @@ function loadDemoData() {
   state.shifts = state.shifts.filter(s => !(s.date >= WILL_CUTOFF && s.collabId === '1'));
 
   // Reasignar turnos de Will a otros voluntarios a partir del 28 de junio
-  const substitutes = ['7', '9', '2']; // Rodrigo (Guitarra/Bajo), Daniel (Guitarra/Bajo), Sherly (Voz Apoyo)
+  const substitutes = ['7', '8', '2']; // Rodrigo (Guitarra), Daniel (Guitarra/Voz de Apoyo), Sherly (Voz Apoyo)
   let subIdx = 0;
   affectedDates.forEach(ds => {
     ['AM', 'PM'].forEach(turno => {
