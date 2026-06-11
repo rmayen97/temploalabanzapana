@@ -1115,19 +1115,19 @@ function loadDemoData() {
   const rotation = [
     { // Semana 1 — Will participa
       AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'1', rol:'Guitarra, Voz Lead' }, { collabId:'4', rol:'Bajo' }, { collabId:'3', rol:'Percusión' }],
-      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'8', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }]
+      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'8', rol:'Guitarra' }, { collabId:'10', rol:'Percusión' }]
     },
     { // Semana 2 — Will participa
       AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'8', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }, { collabId:'1', rol:'Voz de Apoyo' }],
-      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'3', rol:'Percusión' }, { collabId:'7', rol:'Guitarra' }, { collabId:'8', rol:'Bajo' }]
+      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'3', rol:'Percusión' }, { collabId:'7', rol:'Guitarra' }, { collabId:'2', rol:'Voz de Apoyo' }]
     },
     { // Semana 3
-      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'7', rol:'Guitarra' }, { collabId:'8', rol:'Bajo' }, { collabId:'3', rol:'Percusión' }],
+      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'7', rol:'Guitarra' }, { collabId:'8', rol:'Bajo' }, { collabId:'10', rol:'Percusión' }],
       PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'2', rol:'Voz de Apoyo' }, { collabId:'4', rol:'Guitarra' }, { collabId:'3', rol:'Percusión' }]
     },
     { // Semana 4 — Herdy apoya en AM
-      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'8', rol:'Guitarra' }, { collabId:'7', rol:'Bajo' }, { collabId:'5', rol:'Voz de Apoyo' }],
-      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'4', rol:'Guitarra' }, { collabId:'8', rol:'Bajo' }]
+      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'7', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }, { collabId:'5', rol:'Voz de Apoyo' }],
+      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'8', rol:'Guitarra' }, { collabId:'10', rol:'Percusión' }]
     }
   ];
 
@@ -1156,7 +1156,7 @@ function loadDemoData() {
   state.shifts = state.shifts.filter(s => !(s.date >= WILL_CUTOFF && s.collabId === '1'));
 
   // Reasignar turnos de Will a otros voluntarios a partir del 28 de junio
-  const substitutes = ['7', '8', '2']; // Rodrigo (Guitarra), Daniel (Guitarra/Voz de Apoyo), Sherly (Voz Apoyo)
+  const substitutes = ['7', '10', '2']; // Rodrigo (Guitarra), Angely (Percusión), Sherly (Voz Apoyo)
   let subIdx = 0;
   affectedDates.forEach(ds => {
     ['AM', 'PM'].forEach(turno => {
