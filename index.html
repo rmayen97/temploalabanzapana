@@ -587,7 +587,7 @@
 </div>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbynzmjccBtPNAFNvnpLDo-AqMmHuLkIFWdk4vegh-YE25o8-vjkBNcyezVrGdmcNg98Kg/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyEy98aYFI4vT2lwgEfCQ65_Y6Ms30ql_5611INS0TpWwzt5haYEjt_itcw5uXKmbF_2w/exec";
 
 function getAdminPassword() {
   return sessionStorage.getItem('adminPass') || '';
@@ -708,7 +708,8 @@ function getNextSunday() {
 //  INIT
 // ============================================================
 async function init() {
-  if (!API_URL || API_URL === 'TU_URL_AQUI') {
+  const useDemo = window.location.search.includes('demo');
+  if (!API_URL || API_URL === 'TU_URL_AQUI' || useDemo) {
     document.getElementById('config-banner').style.display = 'block';
     document.getElementById('loader').classList.add('hidden');
     loadDemoData();
@@ -924,45 +925,99 @@ function loadDemoData() {
     { id:'1', name:'Will Deads',       roles:'Guitarra, Voz Lead', color: colorFromHex('#16A34A') },
     { id:'2', name:'Sherly Larios',    roles:'Voz de Apoyo',       color: colorFromHex('#2563EB') },
     { id:'3', name:'Jonathan Castro',   roles:'Percusión',          color: colorFromHex('#DB2777') },
-    { id:'4', name:'Sam Castro',        roles:'Bajo',               color: colorFromHex('#D97706') },
-    { id:'5', name:'Herdy de León',     roles:'Voz Lead',           color: colorFromHex('#8B5CF6') },
+    { id:'4', name:'Sam Castro',        roles:'Bajo, Guitarra',     color: colorFromHex('#D97706') },
+    { id:'5', name:'Herdy de León',     roles:'Voz Lead (PM), Voz de Apoyo (AM)', color: colorFromHex('#8B5CF6') },
     { id:'6', name:'Pablo de la Cruz',  roles:'Voz de Apoyo',       color: colorFromHex('#EA580C') },
-    { id:'7', name:'Rodrigo Mayén',     roles:'Guitarra',           color: colorFromHex('#06B6D4') },
+    { id:'7', name:'Rodrigo Mayén',     roles:'Guitarra, Bajo',     color: colorFromHex('#06B6D4') },
+    { id:'8', name:'Raquel Orellana',   roles:'Voz Bilingüe (AM)',  color: colorFromHex('#169451') },
+    { id:'9', name:'Daniel Ajanel',     roles:'Guitarra, Bajo',     color: colorFromHex('#4F46E5') },
   ];
 
+  // Generate shifts for the next 8 Sundays (≈2 months)
   const now = new Date();
   const sunday = new Date(now);
   sunday.setDate(sunday.getDate() + (7 - sunday.getDay()) % 7);
   if (sunday < now) sunday.setDate(sunday.getDate() + 7);
-  const ds = dateToStr(sunday);
 
-  const nextSun = new Date(sunday);
-  nextSun.setDate(nextSun.getDate() + 7);
-  const ds2 = dateToStr(nextSun);
-
-  state.shifts = [
-    { id:'s1', date:ds, turno:'AM', collabId:'1', rol:'Guitarra, Voz Lead', notas:'' },
-    { id:'s2', date:ds, turno:'AM', collabId:'2', rol:'Voz de Apoyo',       notas:'' },
-    { id:'s3', date:ds, turno:'AM', collabId:'3', rol:'Percusión',          notas:'' },
-    { id:'s4', date:ds, turno:'AM', collabId:'4', rol:'Bajo',               notas:'' },
-    { id:'s5', date:ds, turno:'PM', collabId:'5', rol:'Voz Lead',           notas:'' },
-    { id:'s6', date:ds, turno:'PM', collabId:'6', rol:'Voz de Apoyo',       notas:'' },
-    { id:'s7', date:ds, turno:'PM', collabId:'7', rol:'Guitarra',           notas:'' },
-    { id:'s8', date:ds, turno:'PM', collabId:'4', rol:'Bajo',               notas:'' },
-
-    { id:'s9',  date:ds2, turno:'AM', collabId:'1', rol:'Guitarra, Voz Lead', notas:'' },
-    { id:'s10', date:ds2, turno:'AM', collabId:'2', rol:'Voz de Apoyo',       notas:'' },
-    { id:'s11', date:ds2, turno:'AM', collabId:'3', rol:'Percusión',          notas:'' },
-    { id:'s12', date:ds2, turno:'AM', collabId:'4', rol:'Bajo',               notas:'' },
-    { id:'s13', date:ds2, turno:'PM', collabId:'5', rol:'Voz Lead',           notas:'' },
-    { id:'s14', date:ds2, turno:'PM', collabId:'6', rol:'Voz de Apoyo',       notas:'' },
-    { id:'s15', date:ds2, turno:'PM', collabId:'7', rol:'Guitarra',           notas:'' },
-    { id:'s16', date:ds2, turno:'PM', collabId:'4', rol:'Bajo',               notas:'' },
+  // Weekly rotation: 4 patterns cycling every 4 weeks
+  // AM = servicio bilingüe (Raquel en voz, guitarras/bajo: Rodrigo, Daniel, Sam)
+  // PM = servicio en español (Herdy lidera voz)
+  const rotation = [
+    { // Semana 1 — Will participa
+      AM: [{ collabId:'8', rol:'Voz Bilingüe' }, { collabId:'1', rol:'Guitarra, Voz Lead' }, { collabId:'4', rol:'Bajo' }, { collabId:'3', rol:'Percusión' }],
+      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'9', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }]
+    },
+    { // Semana 2 — Will participa
+      AM: [{ collabId:'8', rol:'Voz Bilingüe' }, { collabId:'9', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }, { collabId:'1', rol:'Voz de Apoyo' }],
+      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'3', rol:'Percusión' }, { collabId:'7', rol:'Guitarra' }, { collabId:'9', rol:'Bajo' }]
+    },
+    { // Semana 3
+      AM: [{ collabId:'8', rol:'Voz Bilingüe' }, { collabId:'7', rol:'Guitarra' }, { collabId:'9', rol:'Bajo' }, { collabId:'3', rol:'Percusión' }],
+      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'2', rol:'Voz de Apoyo' }, { collabId:'4', rol:'Guitarra' }, { collabId:'3', rol:'Percusión' }]
+    },
+    { // Semana 4 — Herdy apoya en AM
+      AM: [{ collabId:'8', rol:'Voz Bilingüe' }, { collabId:'9', rol:'Guitarra' }, { collabId:'7', rol:'Bajo' }, { collabId:'5', rol:'Voz de Apoyo' }],
+      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'4', rol:'Guitarra' }, { collabId:'9', rol:'Bajo' }]
+    }
   ];
 
+  const NUM_WEEKS = 8;
+  state.shifts = [];
+  let sid = 1;
+
+  for (let w = 0; w < NUM_WEEKS; w++) {
+    const s = new Date(sunday);
+    s.setDate(s.getDate() + w * 7);
+    const ds = dateToStr(s);
+    const r = rotation[w % 4];
+
+    r.AM.forEach(a => {
+      state.shifts.push({ id: 's' + (sid++), date: ds, turno: 'AM', collabId: a.collabId, rol: a.rol, notas: '' });
+    });
+    r.PM.forEach(a => {
+      state.shifts.push({ id: 's' + (sid++), date: ds, turno: 'PM', collabId: a.collabId, rol: a.rol, notas: '' });
+    });
+  }
+
+  // Will Deads no disponible desde el 28 de junio
+  const WILL_CUTOFF = '2026-06-28';
+  const allDates = [...new Set(state.shifts.map(s => s.date))].sort();
+  const affectedDates = allDates.filter(d => d >= WILL_CUTOFF);
+  state.shifts = state.shifts.filter(s => !(s.date >= WILL_CUTOFF && s.collabId === '1'));
+
+  // Reasignar turnos de Will a otros voluntarios a partir del 28 de junio
+  const substitutes = ['7', '9', '2']; // Rodrigo (Guitarra/Bajo), Daniel (Guitarra/Bajo), Sherly (Voz Apoyo)
+  let subIdx = 0;
+  affectedDates.forEach(ds => {
+    ['AM', 'PM'].forEach(turno => {
+      const existing = state.shifts.filter(sh => sh.date === ds && sh.turno === turno);
+      if (existing.length < 4) {
+        const subId = substitutes[subIdx % substitutes.length];
+        const sub = getCollab(subId);
+        state.shifts.push({
+          id: 's' + (sid++), date: ds, turno, collabId: subId,
+          rol: sub ? sub.roles.split(',')[0].trim() : 'Apoyo', notas: ''
+        });
+        subIdx++;
+      }
+    });
+  });
+  state.shifts.sort((a, b) => a.date.localeCompare(b.date) || a.turno.localeCompare(b.turno));
+
+  const firstSundayStr = dateToStr(sunday);
   state.ausencias = [
-    { id:'a1', date:ds, collabId:'3', turno:'AM', motivo:'Viaje familiar' },
+    { id:'a1', date: firstSundayStr, collabId:'3', turno:'AM', motivo:'Viaje familiar' },
   ];
+
+  // Registrar ausencia de Will Deads desde el 28 de junio
+  affectedDates.forEach((ds, i) => {
+    state.ausencias.push({
+      id: 'a' + (10 + i),
+      date: ds, collabId: '1', turno: 'Ambos',
+      motivo: 'Indisponible hasta nuevo aviso',
+      estado: 'Aprobada',
+    });
+  });
 }
 
 // ============================================================
