@@ -106,7 +106,7 @@
   .btn-cancel-assign:hover { background: var(--cream); }
 
   /* MI TURNO */
-  .my-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 1.5rem; box-shadow: var(--shadow); display: flex; align-items: center; gap: 16px; border-left: 4px solid var(--forest); }
+  .my-card { background: white; border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 0.75rem; box-shadow: var(--shadow); display: flex; align-items: center; gap: 16px; border-left: 4px solid var(--forest); }
   .my-card-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 600; color: white; flex-shrink: 0; }
   .my-card-info { flex: 1; }
   .my-card-name { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; }
@@ -114,6 +114,19 @@
   .my-card-stats { display: flex; gap: 16px; margin-top: 6px; }
   .my-stat { font-size: 12px; color: var(--ink-soft); }
   .my-stat strong { font-weight: 600; color: var(--ink); }
+  .my-card-right { text-align: center; flex-shrink: 0; }
+  .my-total-badge { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; color: var(--forest); line-height: 1.1; }
+  .my-total-label { font-size: 10px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+  /* Upcoming shifts list */
+  .my-upcoming { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1.5rem; }
+  .my-upcoming-item { display: flex; align-items: center; gap: 6px; padding: 7px 10px; background: white; border: 1px solid var(--border); border-radius: 20px; font-size: 12px; cursor: pointer; transition: all 0.12s; white-space: nowrap; }
+  .my-upcoming-item:hover { border-color: var(--forest); background: var(--forest-light); transform: translateY(-1px); }
+  .my-upcoming-date { font-weight: 600; color: var(--ink); }
+  .my-upcoming-turno { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px; }
+  .my-upcoming-turno.turno-am { background: var(--amber-light); color: var(--amber); }
+  .my-upcoming-turno.turno-pm { background: var(--blue-light); color: var(--blue); }
+  .my-upcoming-rol { color: var(--ink-muted); }
+  .my-upcoming-when { font-size: 10px; color: var(--forest); font-weight: 500; }
   .person-card.dimmed { opacity: 0.3; }
   .person-card.highlighted { outline: 2px solid var(--forest); outline-offset: -1px; }
   .mc-person.dimmed { opacity: 0.3; }
@@ -165,6 +178,8 @@
   .cal-cell.empty { background: var(--cream); opacity: 0.5; cursor: default; }
   .cal-cell.today { background: #F0FDF4; }
   .cal-cell.today .cal-day-num { background: var(--forest); color: white; }
+  .cal-cell.cal-complete { border-top: 3px solid var(--forest); }
+  .cal-cell.cal-partial { border-top: 3px solid var(--amber); }
   .cal-day-num { font-size: 12px; font-weight: 500; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; margin-bottom: 4px; color: var(--ink-soft); }
   .cal-shift-pill { display: flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 500; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .cal-turno-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
@@ -301,29 +316,99 @@
   .btn-save-contenido { padding: 6px 12px; background: var(--forest); color: white; border: none; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; }
   .btn-cancel-contenido { padding: 6px 12px; background: none; border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; color: var(--ink-muted); }
 
-  /* RESPONSIVE */
+  /* RESPONSIVE — TABLET */
   @media (max-width: 768px) {
     .week-grid { grid-template-columns: 44px repeat(7, 1fr); font-size: 12px; }
     .grid-day-header { padding: 8px 2px; }
     .day-number { font-size: 16px; }
     .grid-cell { padding: 4px; min-height: 70px; }
-    .person-card { padding: 3px 4px; gap: 3px; }
+    .person-card { padding: 3px 4px; gap: 3px; font-size: 11px; }
     .person-name { font-size: 10px; }
     .person-roles { display: none; }
     .person-avatar { width: 18px; height: 18px; font-size: 7px; }
     .turno-badge { font-size: 10px; padding: 3px 6px; }
     .nav-title { font-size: 18px; }
     .app { padding: 1rem; }
-    .header { padding: 0 1rem; }
+    .header { padding: 0 0.75rem; height: 52px; }
+    .header-brand { font-size: 15px; }
+    .header-sub { display: none; }
     .team-grid { grid-template-columns: 1fr 1fr; }
     .absence-layout { grid-template-columns: 1fr; }
     .next-service-body { grid-template-columns: 1fr; }
     .next-service-col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
-    .header-nav { gap: 2px; flex-wrap: wrap; }
-    .tab-btn { font-size: 12px; padding: 5px 10px; }
-    .my-select { max-width: 120px; font-size: 11px; }
+    .header-nav { gap: 3px; flex-wrap: wrap; justify-content: flex-end; }
+    .tab-btn { font-size: 12px; padding: 5px 10px; min-height: 36px; }
+    .my-select { max-width: 110px; font-size: 11px; min-height: 36px; }
     .my-card { flex-direction: column; text-align: center; gap: 10px; }
     .my-card-stats { justify-content: center; }
+    .my-card-right { display: none; }
+    .my-upcoming { gap: 4px; }
+    .my-upcoming-item { font-size: 11px; padding: 5px 8px; }
+    .nav-bar { gap: 10px; }
+    .nav-btn, .today-btn { min-height: 40px; min-width: 40px; display: flex; align-items: center; justify-content: center; }
+    #btn-assign-nav { font-size: 12px; padding: 6px 12px; white-space: nowrap; }
+    .month-cards { grid-template-columns: 1fr; }
+    .modal { max-width: 100%; padding: 1.25rem; border-radius: 12px; }
+    .assign-modal { max-width: 100%; padding: 1.25rem; }
+    .cal-cell { min-height: 75px; padding: 6px; }
+    .cal-shift-pill { font-size: 9px; padding: 2px 4px; }
+    .cal-day-num { width: 20px; height: 20px; font-size: 10px; }
+    .change-user-btn { bottom: 16px; right: 16px; padding: 6px 12px; font-size: 12px; }
+    .admin-badge { bottom: 16px; right: 110px; font-size: 11px; padding: 6px 10px; }
+    .section-title { font-size: 15px; }
+    .month-card-body { grid-template-columns: 1fr; }
+    .month-card-turno:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+    .form-row { grid-template-columns: 1fr; }
+    .modal-actions { flex-direction: column; }
+    .modal-actions .btn-share { padding: 12px; font-size: 13px; }
+    .btn-primary, .btn-submit-assign { padding: 12px; }
+  }
+
+  /* RESPONSIVE — MOBILE */
+  @media (max-width: 480px) {
+    .week-grid { grid-template-columns: 32px repeat(7, 1fr); }
+    .day-name { font-size: 9px; }
+    .day-number { font-size: 13px; }
+    .person-avatar { display: none; }
+    .person-card { padding: 2px 4px; border-radius: 4px; font-size: 10px; }
+    .person-name { font-size: 9px; }
+    .grid-cell { min-height: 56px; gap: 2px; padding: 2px; }
+    .grid-turno-label { min-height: 70px; }
+    .turno-badge { font-size: 9px; padding: 2px 5px; }
+    .team-grid { grid-template-columns: 1fr; }
+    .cal-cell { min-height: 62px; padding: 3px; }
+    .cal-dow { font-size: 10px; }
+    .volunteer-modal-content { padding: 1.25rem; border-radius: 16px; }
+    .volunteer-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); max-height: 220px; gap: 6px; }
+    .volunteer-modal-header h2 { font-size: 18px; }
+    .volunteer-card { padding: 10px 8px; }
+    .volunteer-card-name { font-size: 12px; }
+    .detail-field .edit-shift-btn { width: 22px; height: 22px; }
+    .detail-field .edit-shift-btn svg { width: 11px; height: 11px; }
+    .admin-badge { right: auto; left: 16px; bottom: 60px; font-size: 11px; padding: 7px 12px; }
+    .change-user-btn { bottom: 16px; right: 16px; }
+    .contenido-item .cont-controls { gap: 1px; }
+    .cont-btn svg { width: 11px; height: 11px; }
+    .header { height: 48px; padding: 0 0.5rem; }
+    .header-brand { font-size: 14px; }
+    .tab-btn { padding: 4px 8px; font-size: 11px; min-height: 32px; }
+    .my-select { max-width: 90px; font-size: 10px; min-height: 32px; }
+    .nav-title { font-size: 16px; }
+    .nav-btn { width: 32px; height: 32px; font-size: 14px; }
+    .today-btn { font-size: 11px; padding: 5px 10px; }
+    #btn-assign-nav { font-size: 11px; padding: 5px 10px; }
+    .modal { padding: 1rem; border-radius: 10px; }
+    .modal-title { font-size: 17px; }
+    .assign-modal { padding: 1rem; }
+    .month-card-date { font-size: 14px; }
+    .absence-item { flex-wrap: wrap; gap: 6px; }
+    .absence-tags { flex-direction: row; gap: 4px; }
+    .btn-share { font-size: 11px; padding: 8px 10px; }
+    .error-banner, .config-banner { margin: 0.5rem 0.75rem; padding: 10px 14px; font-size: 12px; }
+    .my-upcoming { gap: 3px; }
+    .my-upcoming-item { font-size: 10px; padding: 4px 7px; gap: 4px; }
+    .my-upcoming-date { font-size: 10px; }
+    .my-upcoming-rol { display: none; }
   }
 
   /* VOLUNTEER MODAL */
@@ -906,6 +991,30 @@ function renderMyCard(containerId) {
     `<span class="role-tag" style="background:${c.color.bg};color:${c.color.fg}">${r}</span>`
   ).join('');
 
+  // Upcoming shifts mini-list (next 4 weeks at most)
+  const upcomingSlice = upcoming.slice(0, 8);
+  let upcomingHtml = '';
+  if (upcomingSlice.length) {
+    upcomingHtml = '<div class="my-upcoming">';
+    upcomingSlice.forEach(s => {
+      const d = new Date(s.date + 'T12:00:00');
+      const diff = Math.round((d - new Date(today + 'T12:00:00')) / 86400000);
+      const when = diff === 0 ? 'Hoy' : diff === 1 ? 'Mañana' : `+${diff}d`;
+      upcomingHtml += `<div class="my-upcoming-item" onclick="navigateToDate('${s.date}')">
+        <span class="my-upcoming-date">${DAYS_SHORT[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}</span>
+        <span class="my-upcoming-turno turno-${s.turno.toLowerCase()}">${s.turno}</span>
+        <span class="my-upcoming-rol">${s.rol}</span>
+        <span class="my-upcoming-when">${when}</span>
+      </div>`;
+    });
+    upcomingHtml += '</div>';
+  }
+
+  const totalUpcoming = upcoming.length;
+  const totalLabel = totalUpcoming > 0
+    ? `${totalUpcoming} turno${totalUpcoming !== 1 ? 's' : ''} programado${totalUpcoming !== 1 ? 's' : ''}`
+    : 'Sin turnos programados';
+
   el.innerHTML = `<div class="my-card" style="border-left-color:${c.color.hex}">
     <div class="my-card-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
     <div class="my-card-info">
@@ -917,7 +1026,11 @@ function renderMyCard(containerId) {
       </div>
       <div style="font-size:12px;color:var(--forest);font-weight:500;margin-top:4px">${nextInfo}</div>
     </div>
-  </div>`;
+    <div class="my-card-right">
+      <div class="my-total-badge">${totalUpcoming}</div>
+      <div class="my-total-label">${totalLabel}</div>
+    </div>
+  </div>${upcomingHtml}`;
 }
 
 function loadDemoData() {
@@ -1155,6 +1268,20 @@ function goThisWeek() {
   render();
 }
 
+function navigateToDate(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  state.view = 'semanal';
+  state.weekStart = getMonday(d);
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.textContent.toLowerCase() === 'semanal') b.classList.add('active');
+  });
+  document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('view-semanal').classList.add('active');
+  render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 // ============================================================
 //  MENSUAL
 // ============================================================
@@ -1177,7 +1304,11 @@ function renderCalendar() {
     const pmShifts = state.shifts.filter(s => s.date === ds && s.turno === 'PM');
 
     const hasShifts = amShifts.length || pmShifts.length;
-    html += `<div class="cal-cell${isToday ? ' today' : ''}${hasShifts ? ' has-shifts' : ''}" onclick="openDayDetail('${ds}', amShifts.length ? 'AM' : 'PM')">`;
+    const amComplete = amShifts.length >= 4;
+    const pmComplete = pmShifts.length >= 4;
+    const bothComplete = amShifts.length && pmShifts.length && amComplete && pmComplete;
+    const statusClass = hasShifts ? (bothComplete ? ' cal-complete' : ' cal-partial') : '';
+    html += `<div class="cal-cell${isToday ? ' today' : ''}${hasShifts ? ' has-shifts' : ''}${statusClass}" onclick="openDayDetail('${ds}', amShifts.length ? 'AM' : 'PM')">`;
     html += `<div class="cal-day-num">${d}</div>`;
 
     if (amShifts.length) {
@@ -1563,7 +1694,7 @@ function checkAdminPassword() {
 
   fetch(API_URL, {
     method: 'POST',
-    body: JSON.stringify({ action: 'addTurno', password: input, fecha: '', turno: 'AM', colaboradorId: '', rol: 'test' }),
+    body: JSON.stringify({ action: 'checkAuth', password: input }),
   }).then(res => res.json()).then(data => {
     if (data.unauthorized) {
       msg.className = 'form-msg error';
@@ -2108,7 +2239,7 @@ async function shareAsImage() {
     const footer = document.createElement('div');
     footer.id = 'capture-footer';
     footer.style.cssText = 'text-align:center;padding:14px 0 4px;border-top:1px solid #EDE9E0;margin-top:14px;font-size:11px;color:#78716C;font-family:DM Sans,sans-serif;';
-    footer.textContent = `Turnos · Templo Alabanza Panamá · ${fechaCorta}`;
+    footer.textContent = `Turnos · Templo Alabanza Panajachel · ${fechaCorta}`;
     captureEl.appendChild(footer);
 
     await new Promise(r => setTimeout(r, 50));
