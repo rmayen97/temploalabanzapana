@@ -583,13 +583,13 @@
   </nav>
 </header>
 
-<div class="config-banner" id="config-banner">
-  <strong>Conecta tu Google Sheet</strong>
-  Busca la variable API_URL en el script y pega la URL de tu Web App.
+<div class="config-banner" id="config-banner" style="display:none;">
+  <strong>Conectando con Supabase</strong>
+  Verifica que las tablas estén creadas en el SQL Editor.
 </div>
 <div class="error-banner" id="error-banner">
-  <strong>No se pudo conectar con Google Sheets</strong>
-  Usando datos de demostración.
+  <strong>Error de conexión</strong>
+  No se pudo conectar con Supabase. Usando datos de demostración.
 </div>
 
 <div class="app">
@@ -798,7 +798,31 @@
 </datalist>
 
 <script>
-const API_URL = "https://script.google.com/macros/s/AKfycbyEy98aYFI4vT2lwgEfCQ65_Y6Ms30ql_5611INS0TpWwzt5haYEjt_itcw5uXKmbF_2w/exec";
+// ============================================================
+//  SUPABASE CONFIG
+// ============================================================
+const SB_URL = "https://bpuhufxzwlvjpbybgtph.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJwdWh1Znh6d2x2anBieWJndHBoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMDgzMTIsImV4cCI6MjA5Njc4NDMxMn0.C1GZ7mAH8z7eJ0YQHmDbgM8ywZ91d9jIht8TY-gnE0k";
+
+async function sbFetch(path, options = {}) {
+  const url = `${SB_URL}/rest/v1/${path}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      'apikey': SB_KEY,
+      'Authorization': `Bearer ${SB_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': options.method === 'POST' ? 'return=representation' : '',
+      ...options.headers,
+    },
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Supabase ${res.status}: ${err}`);
+  }
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
 
 function getAdminPassword() {
   return sessionStorage.getItem('adminPass') || '';
@@ -920,60 +944,52 @@ function getNextSunday() {
 // ============================================================
 async function init() {
   const useDemo = window.location.search.includes('demo');
-  if (!API_URL || API_URL === 'TU_URL_AQUI' || useDemo) {
-    document.getElementById('config-banner').style.display = 'block';
-    document.getElementById('loader').classList.add('hidden');
-    loadDemoData();
-    render();
-    populateMySelect();
-    checkVolunteerModal();
-    return;
-  }
 
   try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
+    // Fetch admin password from config
+    let adminPass = '';
+    try {
+      const configData = await sbFetch('config?key=eq.admin_password');
+      adminPass = configData[0]?.value || '';
+    } catch (e) { /* config table might not exist yet */ }
 
-    state.collaborators = data.colaboradores.map(c => ({
-      id: String(c.id),
-      name: c.nombre,
-      roles: c.roles || c.asignación || c.rol || '',
-      color: colorFromHex(c.color),
-    }));
+    if (!useDemo) {
+      // Fetch all data from Supabase
+      const [collabs, turnosData, ausenciasData] = await Promise.all([
+        sbFetch('colaboradores?select=*&order=id'),
+        sbFetch('turnos?select=*&order=fecha'),
+        sbFetch('ausencias?select=*&order=fecha'),
+      ]);
 
-    state.shifts = data.turnos.map(t => ({
-      id: String(t.id),
-      date: normalizeDate(t.fecha),
-      turno: (t.turno || 'AM').toUpperCase(),
-      collabId: String(t.colaboradorId),
-      rol: t.rol || '',
-      notas: t.notas || '',
-    }));
+      state.collaborators = collabs.map(c => ({
+        id: String(c.id),
+        name: c.nombre,
+        roles: c.roles || '',
+        color: colorFromHex(c.color),
+      }));
 
-    if (data.ausencias) {
-      state.ausencias = data.ausencias.map(a => ({
+      state.shifts = turnosData.map(t => ({
+        id: String(t.id),
+        date: t.fecha,
+        turno: (t.turno || 'AM').toUpperCase(),
+        collabId: String(t.colaborador_id),
+        rol: t.rol || '',
+        notas: t.notas || '',
+      }));
+
+      state.ausencias = ausenciasData.map(a => ({
         id: String(a.id),
-        date: normalizeDate(a.fecha),
-        collabId: String(a.colaboradorId),
+        date: a.fecha,
+        collabId: String(a.colaborador_id),
         turno: a.turno || 'Ambos',
         motivo: a.motivo || '',
         estado: (a.estado || 'Pendiente').trim(),
       }));
-    }
-
-    if (data.contenido) {
-      state.contenido = data.contenido.map(c => ({
-        id: String(c.id),
-        fecha: normalizeDate(c.fecha),
-        turno: (c.turno || 'AM').toUpperCase(),
-        tipo: c.tipo || 'nota',
-        contenido: c.contenido || '',
-        orden: Number(c.orden) || 0,
-        creadoPor: c.creadoPor || '',
-      }));
+    } else {
+      loadDemoData();
     }
   } catch (err) {
-    console.error('API error:', err);
+    console.error('Error:', err);
     document.getElementById('error-banner').classList.add('show');
     loadDemoData();
   }
@@ -1700,53 +1716,28 @@ async function submitAbsence() {
     return;
   }
 
-  const selectedDate = new Date(date + 'T12:00:00');
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  const hoursUntil = (selectedDate - now) / (1000 * 60 * 60);
-  if (hoursUntil < 72) {
-    msg.className = 'form-msg error';
-    msg.textContent = 'Debes reportar la ausencia con al menos 3 días de anticipación.';
-    return;
-  }
-
   btn.disabled = true;
   msg.className = 'form-msg';
   msg.textContent = 'Enviando...';
 
-  const newAbsence = {
-    id: String(Date.now()),
-    date,
-    collabId,
-    turno,
-    motivo,
-    estado: 'Pendiente',
-  };
+  try {
+    const [result] = await sbFetch('ausencias', {
+      method: 'POST',
+      body: JSON.stringify({
+        fecha: date, turno, colaborador_id: parseInt(collabId), motivo, estado: 'Pendiente'
+      }),
+    });
 
-  state.ausencias.push(newAbsence);
-  renderAbsenceList();
-
-  if (API_URL && API_URL !== 'TU_URL_AQUI') {
-    try {
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'addAusencia',
-          fecha: date,
-          colaboradorId: collabId,
-          turno,
-          motivo,
-        }),
-      });
-      msg.className = 'form-msg success';
-      msg.textContent = 'Solicitud enviada. Pendiente de aprobación.';
-    } catch {
-      msg.className = 'form-msg error';
-      msg.textContent = 'Guardado localmente (sin conexión al Sheet).';
-    }
-  } else {
+    state.ausencias.push({
+      id: String(result.id), date, collabId, turno, motivo, estado: 'Pendiente',
+    });
+    renderAbsenceList();
     msg.className = 'form-msg success';
-    msg.textContent = 'Solicitud enviada (modo demo).';
+    msg.textContent = 'Solicitud enviada. Pendiente de aprobación.';
+  } catch (err) {
+    console.error('Error:', err);
+    msg.className = 'form-msg error';
+    msg.textContent = 'Error al enviar. Intenta de nuevo.';
   }
 
   btn.disabled = false;
@@ -1983,21 +1974,17 @@ async function saveListEdit(shiftId) {
   shift.collabId = collabId;
   shift.rol = rol;
 
-  if (API_URL && API_URL !== 'TU_URL_AQUI') {
-    try {
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'editTurno', password: getAdminPassword(),
-          turnoId: shiftId, fecha: date, turno, colaboradorId: collabId, rol, notas: shift.notas || ''
-        }),
-      });
-    } catch (err) { console.error('Error saving:', err); }
-  }
+  try {
+    await sbFetch(`turnos?id=eq.${shiftId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        fecha: date, turno, colaborador_id: parseInt(collabId), rol, notas: shift.notas || ''
+      }),
+    });
+  } catch (err) { console.error('Error:', err); }
 
   editingListShiftId = '';
   renderLista();
-  // Refresh other views in background
   if (state.view === 'semanal' || state.view === 'mensual') render();
 }
 
@@ -2005,14 +1992,9 @@ async function deleteListShift(shiftId) {
   if (!state.isAdmin) { openAssignShiftModal(); return; }
   if (!confirm('¿Eliminar este turno?')) return;
 
-  if (API_URL && API_URL !== 'TU_URL_AQUI') {
-    try {
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'deleteTurno', password: getAdminPassword(), turnoId: shiftId }),
-      });
-    } catch (err) { console.error('Error deleting:', err); }
-  }
+  try {
+    await sbFetch(`turnos?id=eq.${shiftId}`, { method: 'DELETE' });
+  } catch (err) { console.error('Error:', err); }
 
   state.shifts = state.shifts.filter(s => s.id !== shiftId);
   renderLista();
@@ -2084,27 +2066,26 @@ function checkAdminPassword() {
   msg.className = 'form-msg';
   msg.textContent = 'Verificando...';
 
-  fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'checkAuth', password: input }),
-  }).then(res => res.json()).then(data => {
-    if (data.unauthorized) {
+  sbFetch('config?key=eq.admin_password')
+    .then(data => {
+      const storedPass = data[0]?.value || '';
+      if (input !== storedPass) {
+        msg.className = 'form-msg error';
+        msg.textContent = 'Contraseña incorrecta';
+        document.getElementById('assign-password-input').value = '';
+        document.getElementById('assign-password-input').focus();
+      } else {
+        sessionStorage.setItem('adminPass', input);
+        state.isAdmin = true;
+        sessionStorage.setItem('adminAuth', '1');
+        msg.className = 'form-msg success';
+        msg.textContent = 'Acceso concedido';
+        setTimeout(() => showAssignForm(), 300);
+      }
+    }).catch(() => {
       msg.className = 'form-msg error';
-      msg.textContent = 'Contraseña incorrecta';
-      document.getElementById('assign-password-input').value = '';
-      document.getElementById('assign-password-input').focus();
-    } else {
-      sessionStorage.setItem('adminPass', input);
-      state.isAdmin = true;
-      sessionStorage.setItem('adminAuth', '1');
-      msg.className = 'form-msg success';
-      msg.textContent = 'Acceso concedido';
-      setTimeout(() => showAssignForm(), 300);
-    }
-  }).catch(() => {
-    msg.className = 'form-msg error';
-    msg.textContent = 'Error de conexión';
-  });
+      msg.textContent = 'Error de conexión';
+    });
 }
 
 function closeAssignModal(e) {
@@ -2144,37 +2125,28 @@ async function submitShiftAssign() {
   msg.className = 'form-msg';
   msg.textContent = 'Guardando...';
 
-  const newShift = {
-    id: String(Date.now()),
-    date,
-    turno,
-    collabId,
-    rol,
-    notas,
-  };
+  try {
+    const [result] = await sbFetch('turnos', {
+      method: 'POST',
+      body: JSON.stringify({
+        fecha: date, turno, colaborador_id: parseInt(collabId), rol, notas
+      }),
+    });
 
-  state.shifts.push(newShift);
-  document.getElementById('assign-modal').classList.remove('open');
-
-  if (API_URL && API_URL !== 'TU_URL_AQUI') {
-    try {
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'addTurno',
-          password: getAdminPassword(),
-          fecha: date,
-          turno,
-          colaboradorId: collabId,
-          rol,
-          notas,
-        }),
-      });
-    } catch (err) {
-      console.error('Error saving shift:', err);
-    }
+    state.shifts.push({
+      id: String(result.id),
+      date, turno, collabId, rol, notas,
+    });
+    document.getElementById('assign-modal').classList.remove('open');
+    msg.className = 'form-msg';
+    msg.textContent = 'Turno asignado correctamente';
+  } catch (err) {
+    console.error('Error:', err);
+    msg.className = 'form-msg error';
+    msg.textContent = 'Error al guardar. Intenta de nuevo.';
   }
 
+  btn.disabled = false;
   render();
 }
 
@@ -2221,25 +2193,14 @@ async function saveShiftEdit(shiftId) {
   msg.className = 'form-msg';
   msg.textContent = 'Guardando...';
 
-  if (API_URL && API_URL !== 'TU_URL_AQUI') {
-    try {
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'editTurno',
-          password: getAdminPassword(),
-          turnoId: shiftId,
-          fecha: date,
-          turno,
-          colaboradorId: collabId,
-          rol,
-          notas,
-        }),
-      });
-    } catch (err) {
-      console.error('Error editing shift:', err);
-    }
-  }
+  try {
+    await sbFetch(`turnos?id=eq.${shiftId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        fecha: date, turno, colaborador_id: parseInt(collabId), rol, notas,
+      }),
+    });
+  } catch (err) { console.error('Error:', err); }
 
   editingShiftId = '';
   renderModalBody();
@@ -2254,16 +2215,9 @@ async function removeShift(shiftId) {
 
   state.shifts = state.shifts.filter(s => s.id !== shiftId);
 
-  if (API_URL && API_URL !== 'TU_URL_AQUI') {
-    try {
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'deleteTurno', password: getAdminPassword(), turnoId: shiftId }),
-      });
-    } catch (err) {
-      console.error('Error removing shift:', err);
-    }
-  }
+  try {
+    await sbFetch(`turnos?id=eq.${shiftId}`, { method: 'DELETE' });
+  } catch (err) { console.error('Error:', err); }
 
   editingShiftId = '';
   renderModalBody();
@@ -2481,43 +2435,11 @@ async function addContenido() {
 
   state.contenido.push(newItem);
   renderModalBody();
-
-  if (API_URL && API_URL !== 'TU_URL_AQUI') {
-    try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'addContenido',
-          fecha: modalDate,
-          turno: modalTurno,
-          tipo,
-          contenido: texto,
-          orden,
-          creadoPor,
-        }),
-      });
-      const data = await res.json();
-      if (data.id) newItem.id = String(data.id);
-    } catch (err) {
-      console.error('Error saving contenido:', err);
-    }
-  }
 }
 
 async function deleteContenido(id) {
   state.contenido = state.contenido.filter(c => c.id !== id);
   renderModalBody();
-
-  if (API_URL && API_URL !== 'TU_URL_AQUI') {
-    try {
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'deleteContenido', id }),
-      });
-    } catch (err) {
-      console.error('Error deleting contenido:', err);
-    }
-  }
 }
 
 // ============================================================
@@ -2556,21 +2478,6 @@ async function saveContenidoEdit(id) {
   msg.className = 'form-msg';
   msg.textContent = 'Guardando...';
 
-  if (API_URL && API_URL !== 'TU_URL_AQUI') {
-    try {
-      await fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'editContenido',
-          contenidoId: id,
-          contenido: text,
-        }),
-      });
-    } catch (err) {
-      console.error('Error editing contenido:', err);
-    }
-  }
-
   editingContenidoId = '';
   renderModalBody();
 }
@@ -2590,19 +2497,6 @@ function moveContenido(id, direction) {
   const tmp = items[idx].orden;
   items[idx].orden = items[newIdx].orden;
   items[newIdx].orden = tmp;
-
-  if (API_URL && API_URL !== 'TU_URL_AQUI') {
-    [items[idx], items[newIdx]].forEach(item => {
-      fetch(API_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'editContenido',
-          contenidoId: item.id,
-          orden: item.orden,
-        }),
-      });
-    });
-  }
 
   renderModalBody();
 }
