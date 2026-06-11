@@ -2091,7 +2091,7 @@ function renderListaCards() {
     byDate[ds].forEach(s => {
       const c = getCollab(s.collabId);
       if (!c) return;
-      html += `<div class="card-item" draggable="true" ondragstart="handleDragStart(event, '${s.id}')" ondragend="handleDragEnd(event)">
+      html += `<div class="card-item" draggable="true" ondragstart="handleDragStart(event, '${s.id}')" ondragend="handleDragEnd(event)" onclick="if(!window._dragging)openDayDetail('${s.date}','${s.turno}')">
         <div class="card-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
         <div class="card-info">
           <div class="card-name">${c.name}</div>
@@ -2112,6 +2112,7 @@ let draggedShiftId = '';
 
 function handleDragStart(e, shiftId) {
   draggedShiftId = shiftId;
+  window._dragging = true;
   e.dataTransfer.effectAllowed = 'move';
   e.target.classList.add('dragging');
 }
@@ -2119,6 +2120,7 @@ function handleDragStart(e, shiftId) {
 function handleDragEnd(e) {
   e.target.classList.remove('dragging');
   document.querySelectorAll('.cards-col-body').forEach(el => el.classList.remove('drag-over'));
+  setTimeout(() => { window._dragging = false; }, 50);
 }
 
 function handleDragOver(e) {
