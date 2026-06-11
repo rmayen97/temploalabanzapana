@@ -750,7 +750,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">Rol</label>
-        <input class="form-input" id="assign-rol" type="text" placeholder="ej. Guitarra, Voz Lead..." />
+        <input class="form-input" id="assign-rol" type="text" placeholder="ej. Guitarra, Voz Lead..." list="roles-list" />
       </div>
       <div class="form-group">
         <label class="form-label">Notas (opcional)</label>
@@ -783,6 +783,19 @@
     <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
   </div>
 </div>
+
+<!-- ROLES DATALIST -->
+<datalist id="roles-list">
+  <option value="Voz Bilingüe">
+  <option value="Voz Lead">
+  <option value="Voz de Apoyo">
+  <option value="Guitarra, Voz Lead">
+  <option value="Guitarra, Voz de Apoyo">
+  <option value="Guitarra">
+  <option value="Bajo">
+  <option value="Guitarra, Bajo">
+  <option value="Percusión">
+</datalist>
 
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbyEy98aYFI4vT2lwgEfCQ65_Y6Ms30ql_5611INS0TpWwzt5haYEjt_itcw5uXKmbF_2w/exec";
@@ -1898,7 +1911,7 @@ function renderLista() {
           <option value="PM"${s.turno==='PM'?' selected':''}>PM</option>
         </select>
         <select id="edit-list-collab">${collabOpts}</select>
-        <input type="text" id="edit-list-rol" value="${s.rol.replace(/"/g,'&quot;')}" placeholder="Rol" />
+        <input type="text" id="edit-list-rol" value="${s.rol.replace(/"/g,'&quot;')}" placeholder="Rol" list="roles-list" />
         <div class="lista-actions" style="grid-column:span 2;display:flex;gap:4px;">
           <button class="lista-btn" onclick="saveListEdit('${s.id}')" style="background:var(--forest);color:white;border-color:var(--forest);" title="Guardar">✓</button>
           <button class="lista-btn" onclick="cancelListEdit()" title="Cancelar">✕</button>
@@ -2321,7 +2334,7 @@ function renderModalBody() {
           </div>
           <div class="shift-edit-row">
             <label>Rol</label>
-            <input id="edit-s-rol" type="text" value="${s.rol.replace(/"/g, '&quot;')}" />
+            <input id="edit-s-rol" type="text" value="${s.rol.replace(/"/g, '&quot;')}" list="roles-list" />
           </div>
           <div class="shift-edit-row">
             <label>Notas</label>
