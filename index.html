@@ -160,6 +160,41 @@
   .dash-gap-detail { color: var(--ink-muted); }
   .dash-gap-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 10px; }
   .dash-no-gaps { text-align: center; padding: 1rem; color: var(--forest); font-size: 13px; font-weight: 500; }
+
+  /* LISTA TABLE */
+  .lista-table { background: white; border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
+  .lista-row { display: grid; grid-template-columns: 110px 56px 1fr 1fr 60px 40px; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--border); font-size: 13px; gap: 8px; transition: background 0.1s; }
+  .lista-row:last-child { border-bottom: none; }
+  .lista-row:hover { background: #FAFAF9; }
+  .lista-row.header { background: var(--cream); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); padding: 10px 16px; }
+  .lista-date { font-weight: 500; white-space: nowrap; }
+  .lista-turno { font-size: 11px; font-weight: 600; }
+  .lista-turno.am { color: var(--amber); }
+  .lista-turno.pm { color: var(--blue); }
+  .lista-person { display: flex; align-items: center; gap: 8px; }
+  .lista-avatar { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; color: white; flex-shrink: 0; }
+  .lista-name { font-weight: 500; }
+  .lista-rol { color: var(--ink-muted); }
+  .lista-notas { color: var(--ink-muted); font-style: italic; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lista-actions { display: flex; gap: 4px; }
+  .lista-btn { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: all 0.12s; color: var(--ink-muted); }
+  .lista-btn:hover { background: var(--forest); color: white; border-color: var(--forest); }
+  .lista-btn.danger:hover { background: var(--red); border-color: var(--red); }
+  .lista-row.editing { background: var(--cream); }
+  .lista-edit-form { display: contents; }
+  .lista-edit-form select, .lista-edit-form input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 12px; background: white; }
+  .lista-edit-form select:focus, .lista-edit-form input:focus { border-color: var(--forest); outline: none; }
+  .lista-empty { text-align: center; padding: 2rem; color: var(--ink-muted); font-size: 13px; }
+  .lista-count { font-size: 12px; color: var(--ink-muted); margin-bottom: 0.75rem; }
+  @media (max-width: 768px) {
+    .lista-row { grid-template-columns: 80px 40px 1fr 1fr 40px 32px; padding: 8px 10px; font-size: 11px; gap: 4px; }
+    .lista-row.header { padding: 8px 10px; font-size: 10px; }
+    .lista-rol { display: none; }
+    .lista-notas { display: none; }
+    .lista-avatar { width: 20px; height: 20px; font-size: 7px; }
+    .lista-btn { width: 24px; height: 24px; }
+  }
+
   @media (max-width: 768px) {
     .dash-volunteer { flex-wrap: wrap; gap: 8px; }
     .dash-vol-bar-wrap { flex: 100%; min-width: 0; }
@@ -540,6 +575,7 @@
     <button class="tab-btn active" onclick="switchView('semanal')">Semanal</button>
     <button class="tab-btn" onclick="switchView('mensual')">Mensual</button>
     <button class="tab-btn" onclick="switchView('ausencias')">Ausencias</button>
+    <button class="tab-btn" onclick="switchView('lista')">Lista</button>
     <button class="tab-btn" onclick="switchView('dashboard')">Dashboard</button>
     <select class="my-select" id="my-volunteer" onchange="setMyVolunteer(this.value)">
       <option value="">Todos</option>
@@ -636,6 +672,24 @@
         <div id="absence-list"></div>
       </div>
     </div>
+  </div>
+
+  <!-- ==================== LISTA ==================== -->
+  <div class="view-panel" id="view-lista">
+    <div class="nav-bar">
+      <div class="nav-title"><em>Lista</em> de Turnos</div>
+      <div class="nav-controls">
+        <select class="my-select" id="lista-filter-collab" onchange="renderLista()" style="background:white;color:var(--ink);border-color:var(--border);">
+          <option value="">Todos</option>
+        </select>
+        <select class="my-select" id="lista-filter-turno" onchange="renderLista()" style="background:white;color:var(--ink);border-color:var(--border);">
+          <option value="">AM y PM</option>
+          <option value="AM">AM</option>
+          <option value="PM">PM</option>
+        </select>
+      </div>
+    </div>
+    <div id="lista-table"></div>
   </div>
 
   <!-- ==================== DASHBOARD ==================== -->
@@ -1225,6 +1279,8 @@ function render() {
     renderAbsenceList();
   } else if (state.view === 'dashboard') {
     renderDashboard();
+  } else if (state.view === 'lista') {
+    renderLista();
   }
 }
 
@@ -1785,6 +1841,156 @@ function renderDashboard() {
   }
   gapsHtml += '</div>';
   document.getElementById('dashboard-gaps').innerHTML = gapsHtml;
+}
+
+// ============================================================
+//  LISTA DE TURNOS EDITABLE
+// ============================================================
+let editingListShiftId = '';
+
+function renderLista() {
+  // Init filter selects
+  const collabSelect = document.getElementById('lista-filter-collab');
+  if (!collabSelect.children.length || collabSelect.children.length === 1) {
+    collabSelect.innerHTML = '<option value="">Todos</option>' +
+      state.collaborators.filter(c => c.id !== '11').map(c =>
+        `<option value="${c.id}">${c.name}</option>`
+      ).join('');
+  }
+
+  const today = todayStr();
+  const filterCollab = document.getElementById('lista-filter-collab').value;
+  const filterTurno = document.getElementById('lista-filter-turno').value;
+
+  let shifts = state.shifts.filter(s => s.date >= today);
+  if (filterCollab) shifts = shifts.filter(s => s.collabId === filterCollab);
+  if (filterTurno) shifts = shifts.filter(s => s.turno === filterTurno);
+  shifts.sort((a, b) => a.date.localeCompare(b.date) || a.turno.localeCompare(b.turno));
+
+  const el = document.getElementById('lista-table');
+  if (!shifts.length) {
+    el.innerHTML = '<div class="lista-table"><div class="lista-empty">No hay turnos que coincidan con los filtros.</div></div>';
+    return;
+  }
+
+  let html = `<div class="lista-count">${shifts.length} turno${shifts.length !== 1 ? 's' : ''}</div>`;
+  html += '<div class="lista-table">';
+  html += '<div class="lista-row header"><span>Fecha</span><span>Turno</span><span>Voluntario</span><span>Rol</span><span>Notas</span><span></span></div>';
+
+  shifts.forEach(s => {
+    const c = getCollab(s.collabId);
+    if (!c) return;
+    const d = new Date(s.date + 'T12:00:00');
+    const fechaStr = `${DAYS_SHORT[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`;
+    const isEditing = s.id === editingListShiftId;
+
+    if (isEditing) {
+      const collabOpts = state.collaborators.filter(x => x.id !== '11').map(x =>
+        `<option value="${x.id}"${x.id === s.collabId ? ' selected' : ''}>${x.name}</option>`
+      ).join('');
+      html += `<div class="lista-row editing">
+        <input type="date" id="edit-list-date" value="${s.date}" />
+        <select id="edit-list-turno">
+          <option value="AM"${s.turno==='AM'?' selected':''}>AM</option>
+          <option value="PM"${s.turno==='PM'?' selected':''}>PM</option>
+        </select>
+        <select id="edit-list-collab">${collabOpts}</select>
+        <input type="text" id="edit-list-rol" value="${s.rol.replace(/"/g,'&quot;')}" placeholder="Rol" />
+        <div class="lista-actions" style="grid-column:span 2;display:flex;gap:4px;">
+          <button class="lista-btn" onclick="saveListEdit('${s.id}')" style="background:var(--forest);color:white;border-color:var(--forest);" title="Guardar">✓</button>
+          <button class="lista-btn" onclick="cancelListEdit()" title="Cancelar">✕</button>
+        </div>
+      </div>`;
+    } else {
+      html += `<div class="lista-row">
+        <span class="lista-date">${fechaStr}</span>
+        <span class="lista-turno ${s.turno.toLowerCase()}">${s.turno}</span>
+        <div class="lista-person">
+          <div class="lista-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
+          <span class="lista-name">${c.name}</span>
+        </div>
+        <span class="lista-rol">${s.rol}</span>
+        <span class="lista-notas">${s.notas || '—'}</span>
+        <div class="lista-actions">
+          <button class="lista-btn" onclick="event.stopPropagation();startListEdit('${s.id}')" title="Editar">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="lista-btn danger" onclick="event.stopPropagation();deleteListShift('${s.id}')" title="Eliminar">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+          </button>
+        </div>
+      </div>`;
+    }
+  });
+
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function startListEdit(shiftId) {
+  if (!state.isAdmin) { openAssignShiftModal(); return; }
+  editingListShiftId = shiftId;
+  renderLista();
+  setTimeout(() => {
+    const input = document.getElementById('edit-list-date');
+    if (input) input.focus();
+  }, 100);
+}
+
+function cancelListEdit() {
+  editingListShiftId = '';
+  renderLista();
+}
+
+async function saveListEdit(shiftId) {
+  const date = document.getElementById('edit-list-date').value;
+  const turno = document.getElementById('edit-list-turno').value;
+  const collabId = document.getElementById('edit-list-collab').value;
+  const rol = document.getElementById('edit-list-rol').value.trim();
+
+  if (!date || !collabId || !rol) { alert('Completa todos los campos.'); return; }
+
+  const shift = state.shifts.find(s => s.id === shiftId);
+  if (!shift) return;
+
+  shift.date = date;
+  shift.turno = turno;
+  shift.collabId = collabId;
+  shift.rol = rol;
+
+  if (API_URL && API_URL !== 'TU_URL_AQUI') {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'editTurno', password: getAdminPassword(),
+          turnoId: shiftId, fecha: date, turno, colaboradorId: collabId, rol, notas: shift.notas || ''
+        }),
+      });
+    } catch (err) { console.error('Error saving:', err); }
+  }
+
+  editingListShiftId = '';
+  renderLista();
+  // Refresh other views in background
+  if (state.view === 'semanal' || state.view === 'mensual') render();
+}
+
+async function deleteListShift(shiftId) {
+  if (!state.isAdmin) { openAssignShiftModal(); return; }
+  if (!confirm('¿Eliminar este turno?')) return;
+
+  if (API_URL && API_URL !== 'TU_URL_AQUI') {
+    try {
+      await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'deleteTurno', password: getAdminPassword(), turnoId: shiftId }),
+      });
+    } catch (err) { console.error('Error deleting:', err); }
+  }
+
+  state.shifts = state.shifts.filter(s => s.id !== shiftId);
+  renderLista();
 }
 
 // ============================================================
