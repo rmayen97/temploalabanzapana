@@ -1642,10 +1642,12 @@ function renderNextService(containerId) {
     html += '<div class="ns-contenido-title">📋 Contenido</div>';
     if (items.length) {
       html += items.map(item => {
-        const icon = iconMap[item.tipo] || '📝';
         let text = item.contenido;
-        if (item.tipo === 'link') text = `<a href="${item.contenido}" target="_blank" rel="noopener">${item.contenido}</a>`;
-        return `<div class="ns-contenido-item"><span>${icon}</span> <span>${text}</span></div>`;
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        if (urlRegex.test(text)) {
+          text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+        }
+        return `<div class="ns-contenido-item"><span>📝</span> <span style="white-space:pre-wrap">${text}</span></div>`;
       }).join('');
     } else {
       html += '<div class="ns-contenido-pending">Contenido pendiente de asignar</div>';
@@ -2492,16 +2494,15 @@ function renderModalBody() {
   if (items.length) {
     html += `<div class="contenido-list${modalEditMode ? ' modalEditMode' : ''}">`;
     items.forEach((item, idx) => {
-      const icon = iconMap[item.tipo] || '📝';
       const isEditing = item.id === editingContenidoId;
       const firstItem = idx === 0;
       const lastItem = idx === items.length - 1;
 
       if (isEditing) {
-        html += `<div class="contenido-item editing-contenido tipo-${item.tipo}">
-          <span class="contenido-icon">${icon}</span>
+        html += `<div class="contenido-item editing-contenido">
+          <span class="contenido-icon">📝</span>
           <div class="contenido-edit-form" style="flex:1">
-            <input id="edit-cont-text" type="text" value="${item.contenido.replace(/"/g, '&quot;')}" onkeydown="if(event.key==='Enter')saveContenidoEdit('${item.id}')" />
+            <textarea id="edit-cont-text" rows="2" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;background:white;resize:vertical;">${item.contenido.replace(/"/g, '&quot;')}</textarea>
             <div class="contenido-edit-actions">
               <button class="btn-save-contenido" onclick="saveContenidoEdit('${item.id}')">Guardar</button>
               <button class="btn-cancel-contenido" onclick="cancelContenidoEdit()">Cancelar</button>
@@ -2511,12 +2512,14 @@ function renderModalBody() {
         </div>`;
       } else {
         let text = item.contenido;
-        if (item.tipo === 'link') {
-          text = `<a href="${item.contenido}" target="_blank" rel="noopener">${item.contenido}</a>`;
+        // Auto-link URLs
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        if (urlRegex.test(text)) {
+          text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener">$1</a>');
         }
-        html += `<div class="contenido-item tipo-${item.tipo}">
-          <span class="contenido-icon">${icon}</span>
-          <div class="contenido-text">
+        html += `<div class="contenido-item">
+          <span class="contenido-icon">📝</span>
+          <div class="contenido-text" style="white-space:pre-wrap;word-break:break-word;">
             ${text}
             ${item.creadoPor ? `<div style="font-size:10px;color:var(--ink-muted);margin-top:2px">— ${item.creadoPor}</div>` : ''}
           </div>
@@ -2544,14 +2547,7 @@ function renderModalBody() {
 
   if (modalEditMode) {
     html += `<div class="contenido-form">
-      <div class="contenido-form-row">
-        <select id="cont-tipo">
-          <option value="cancion">🎵 Canción</option>
-          <option value="nota">📝 Nota</option>
-          <option value="link">🔗 Link</option>
-        </select>
-        <input id="cont-texto" type="text" placeholder="Nombre de canción, nota o URL..." />
-      </div>
+      <textarea id="cont-texto" placeholder="Escribe el contenido del turno..." rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;resize:vertical;background:white;"></textarea>
       <button class="btn-add-contenido" onclick="addContenido()">Agregar</button>
       <div class="form-msg" id="cont-msg" style="font-size:11px;min-height:14px"></div>
     </div>`;
@@ -2567,7 +2563,6 @@ function toggleEditMode() {
 }
 
 async function addContenido() {
-  const tipo = document.getElementById('cont-tipo').value;
   const texto = document.getElementById('cont-texto').value.trim();
   const msg = document.getElementById('cont-msg');
 
@@ -2587,7 +2582,7 @@ async function addContenido() {
     id: String(Date.now()),
     fecha: modalDate,
     turno: modalTurno,
-    tipo,
+    tipo: 'nota',
     contenido: texto,
     orden,
     creadoPor,
