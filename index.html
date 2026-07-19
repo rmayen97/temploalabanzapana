@@ -1765,6 +1765,23 @@ async function submitAbsence() {
       }),
     });
 
+    const colab = getCollab(collabId);
+    const nombre = colab ? colab.name : collabId;
+    const absData = JSON.stringify({
+      action: 'addAusencia',
+      colaboradorId: collabId,
+      nombre: nombre,
+      fecha: date,
+      turno: turno,
+      motivo: motivo,
+    });
+    fetch('https://script.google.com/macros/s/AKfycbzPLaa2sLIo5Wu-eBsVRHLyCpziJLkZthOChY5Y3OEpiJOEW-_DSOKS0hyqGe5zkp4TFA/exec', {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: absData,
+    }).catch(e => console.log('Apps Script no disponible:', e));
+
     state.ausencias.push({
       id: String(result.id), date, collabId, turno, motivo, estado: 'Pendiente',
     });
