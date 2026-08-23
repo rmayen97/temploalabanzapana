@@ -443,6 +443,68 @@
   .btn-save-contenido { padding: 6px 12px; background: var(--forest); color: white; border: none; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; }
   .btn-cancel-contenido { padding: 6px 12px; background: none; border: 1px solid var(--border); border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 12px; cursor: pointer; color: var(--ink-muted); }
 
+  /* BIBLIOTECA */
+  .song-search { padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: white; color: var(--ink); outline: none; min-width: 180px; transition: border 0.12s; }
+  .song-search:focus { border-color: var(--forest); }
+  .biblioteca-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+  .biblioteca-col { background: white; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; }
+  .col-header { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 500; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+  .song-list { display: flex; flex-direction: column; gap: 8px; max-height: 62vh; overflow-y: auto; padding-right: 2px; }
+  .song-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--cream); cursor: grab; transition: all 0.12s; }
+  .song-row:hover { background: var(--cream-dark); border-color: var(--forest); }
+  .song-row.dragging { opacity: 0.5; }
+  .song-drag-handle { color: var(--ink-muted); font-size: 14px; letter-spacing: -3px; cursor: grab; user-select: none; flex-shrink: 0; }
+  .song-row-icon { font-size: 15px; flex-shrink: 0; }
+  .song-row-info { flex: 1; min-width: 0; }
+  .song-row-title { font-weight: 500; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song-row-artista { font-size: 11px; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song-card-key { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 12px; background: var(--forest-light); color: var(--forest); flex-shrink: 0; }
+  .song-row-actions { display: flex; gap: 2px; flex-shrink: 0; }
+  .song-row-actions button { background: none; border: none; cursor: pointer; font-size: 14px; padding: 2px 4px; color: var(--ink-muted); }
+  .song-row-actions button:hover { color: var(--forest); }
+  .song-row-actions button.danger:hover { color: var(--red); }
+
+  .song-btn { padding: 7px 12px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.12s; border: 1px solid var(--border); background: white; color: var(--ink-soft); }
+  .song-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .song-btn.primary { background: var(--forest); color: white; border-color: var(--forest); }
+  .song-btn.primary:hover { background: #145240; }
+  .song-btn.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .song-btn.danger { color: var(--red); }
+  .song-btn.danger:hover { border-color: var(--red); }
+  .song-empty { text-align: center; padding: 2rem 1rem; color: var(--ink-muted); font-size: 12px; font-style: italic; }
+
+  .deck { display: flex; flex-direction: column; }
+  .deck-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .deck-title { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 500; }
+  .deck-body { display: flex; flex-direction: column; gap: 6px; min-height: 140px; border: 2px dashed var(--border); border-radius: 10px; padding: 10px; transition: all 0.12s; }
+  .deck-body.drag-over { border-color: var(--forest); background: var(--forest-light); }
+  .deck-item { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; background: white; cursor: grab; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .deck-item.dragging { opacity: 0.5; }
+  .deck-item.drag-over-item { border-color: var(--forest); box-shadow: 0 -2px 0 var(--forest); }
+  .deck-num { width: 20px; height: 20px; border-radius: 50%; background: var(--forest); color: white; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .deck-item-title { flex: 1; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .deck-item-key { font-size: 10px; color: var(--ink-muted); flex-shrink: 0; }
+  .deck-remove { background: none; border: none; color: var(--red); cursor: pointer; font-size: 16px; line-height: 1; padding: 0 4px; opacity: 0.55; }
+  .deck-remove:hover { opacity: 1; }
+  .deck-empty { text-align: center; padding: 2rem 1rem; color: var(--ink-muted); font-size: 12px; font-style: italic; }
+
+  .assign-playlist { margin-top: 16px; border-top: 1px solid var(--border); padding-top: 14px; }
+  .assign-playlist-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); margin-bottom: 10px; }
+  .assign-playlist-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+  .assign-playlist-input { flex: 1; min-width: 110px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; background: white; color: var(--ink); outline: none; }
+  .assign-playlist-input:focus { border-color: var(--forest); }
+  .assign-playlist-controls .song-btn.primary { flex: 1; min-width: 130px; white-space: nowrap; }
+
+  .song-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  @media (max-width: 768px) {
+    .biblioteca-layout { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .song-search { min-width: 0; flex: 1; width: 100%; }
+    .song-form-row { grid-template-columns: 1fr; }
+  }
+
   /* RESPONSIVE — TABLET */
   @media (max-width: 768px) {
     .week-grid { grid-template-columns: 44px repeat(7, 1fr); font-size: 12px; }
@@ -630,6 +692,7 @@
     <button class="tab-btn" onclick="switchView('mensual')">Mensual</button>
     <button class="tab-btn" onclick="switchView('ausencias')">Ausencias</button>
     <button class="tab-btn" onclick="switchView('lista')">Lista</button>
+    <button class="tab-btn" onclick="switchView('biblioteca')">Biblioteca</button>
     <button class="tab-btn" onclick="switchView('dashboard')">Dashboard</button>
     <select class="my-select" id="my-volunteer" onchange="setMyVolunteer(this.value)">
       <option value="">Todos</option>
@@ -779,6 +842,49 @@
     <div id="dashboard-gaps"></div>
   </div>
 
+  <!-- ==================== BIBLIOTECA ==================== -->
+  <div class="view-panel" id="view-biblioteca">
+    <div class="nav-bar">
+      <div class="nav-title"><em>Biblioteca</em> de Canciones</div>
+      <div class="nav-controls">
+        <input class="song-search" id="song-search" type="text" placeholder="Buscar canción..." oninput="songSearch=this.value;renderSongLibrary()" />
+        <button class="today-btn" onclick="openSongModal()" style="background:var(--forest);color:white;border-color:var(--forest);font-weight:500;">
+          <span style="font-size:15px;line-height:1">+</span> Nueva canción
+        </button>
+      </div>
+    </div>
+
+    <div class="biblioteca-layout">
+      <div class="biblioteca-col library-col">
+        <div class="col-header">🎵 Biblioteca</div>
+        <div class="song-list" id="song-list"></div>
+      </div>
+
+      <div class="biblioteca-col deck-col">
+        <div class="deck">
+          <div class="deck-header">
+            <div class="deck-title">🎧 Playlist</div>
+            <button class="song-btn" onclick="clearDeck()">Vaciar</button>
+          </div>
+          <div class="deck-body" id="deck-body" ondragover="deckDragOver(event)" ondragleave="deckDragLeave(event)" ondrop="deckDrop(event)"></div>
+        </div>
+
+        <div class="assign-playlist">
+          <div class="assign-playlist-title">Asignar playlist a un turno</div>
+          <div class="assign-playlist-controls">
+            <input type="date" class="assign-playlist-input" id="deck-fecha" />
+            <select class="assign-playlist-input" id="deck-turno">
+              <option value="AM">AM</option>
+              <option value="PM">PM</option>
+            </select>
+            <button class="song-btn primary" id="deck-assign-btn" onclick="assignPlaylistToTurno()">Asignar a turno</button>
+          </div>
+          <div class="form-msg" id="deck-msg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ASSIGN SHIFT MODAL -->
@@ -849,6 +955,40 @@
     </div>
     <div class="btn-share-feedback" id="share-feedback"></div>
     <button class="btn-secondary" onclick="closeModal()">Cerrar</button>
+  </div>
+</div>
+
+<!-- SONG MODAL (crear/editar canción) -->
+<div class="modal-bg" id="song-modal" onclick="closeSongModal(event)">
+  <div class="modal">
+    <div class="modal-title" id="song-modal-title">Nueva canción</div>
+    <div class="song-form">
+      <div class="form-group">
+        <label class="form-label">Título</label>
+        <input class="form-input" id="song-titulo" type="text" placeholder="ej. Cuan Grande Es Dios" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Artista</label>
+        <input class="form-input" id="song-artista" type="text" placeholder="ej. Chris Tomlin" />
+      </div>
+      <div class="song-form-row">
+        <div class="form-group">
+          <label class="form-label">Tonalidad (opcional)</label>
+          <input class="form-input" id="song-tonalidad" type="text" placeholder="ej. A, G, Em" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Enlace (opcional)</label>
+          <input class="form-input" id="song-enlace" type="text" placeholder="YouTube / Spotify" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Letra (opcional)</label>
+        <textarea class="form-textarea" id="song-letra" rows="4" placeholder="Pega la letra o notas..."></textarea>
+      </div>
+      <button class="btn-primary" onclick="saveSong()">Guardar canción</button>
+      <div class="form-msg" id="song-msg"></div>
+    </div>
+    <button class="btn-secondary" onclick="closeSongModal()">Cancelar</button>
   </div>
 </div>
 
@@ -930,7 +1070,15 @@ let state = {
   shifts: [],
   ausencias: [],
   contenido: [],
+  canciones: [],
+  playlist: [],
 };
+
+let IS_DEMO = false;
+let songSearch = '';
+let editingSongId = '';
+let dragSongId = '';
+let dragSongSource = '';
 
 // ============================================================
 //  UTILS
@@ -1012,6 +1160,7 @@ function getNextSunday() {
 // ============================================================
 async function init() {
   const useDemo = window.location.search.includes('demo');
+  IS_DEMO = useDemo;
 
   try {
     // Fetch admin password from config
@@ -1053,6 +1202,32 @@ async function init() {
         motivo: a.motivo || '',
         estado: (a.estado || 'Pendiente').trim(),
       }));
+
+      try {
+        const [contenidoData, cancionesData] = await Promise.all([
+          sbFetch('contenido?select=*&order=fecha,orden'),
+          sbFetch('canciones?select=*&order=titulo'),
+        ]);
+        state.contenido = contenidoData.map(c => ({
+          id: String(c.id),
+          fecha: c.fecha,
+          turno: (c.turno || 'AM').toUpperCase(),
+          tipo: c.tipo || 'nota',
+          contenido: c.contenido || '',
+          orden: c.orden || 0,
+          creadoPor: c.creado_por || '',
+          cancionId: c.cancion_id ? String(c.cancion_id) : '',
+        }));
+        state.canciones = cancionesData.map(c => ({
+          id: String(c.id),
+          titulo: c.titulo || '',
+          artista: c.artista || '',
+          tonalidad: c.tonalidad || '',
+          enlace: c.enlace || '',
+          letra: c.letra || '',
+          creadoPor: c.creado_por || '',
+        }));
+      } catch (e) { /* contenido/canciones tables may not exist yet */ }
     } else {
       loadDemoData();
     }
@@ -1342,6 +1517,24 @@ function loadDemoData() {
       estado: 'Aprobada',
     });
   });
+
+  state.canciones = [
+    { id: '1', titulo: 'Cuan Grande Es Dios', artista: 'Chris Tomlin', tonalidad: 'A', enlace: '', letra: '', creadoPor: '' },
+    { id: '2', titulo: 'Grande y Fuerte', artista: 'Miel San Marcos', tonalidad: 'E', enlace: '', letra: '', creadoPor: '' },
+    { id: '3', titulo: 'Poderoso Para Salvar', artista: 'Hillsong', tonalidad: 'G', enlace: '', letra: '', creadoPor: '' },
+    { id: '4', titulo: 'Al Que Está Sentado', artista: 'Elevation Worship', tonalidad: 'G', enlace: '', letra: '', creadoPor: '' },
+    { id: '5', titulo: 'Como Dijiste', artista: "Christine D'Clario", tonalidad: 'D', enlace: '', letra: '', creadoPor: '' },
+    { id: '6', titulo: 'Su Nombre Es Santo', artista: 'Un Corazón', tonalidad: 'C', enlace: '', letra: '', creadoPor: '' },
+    { id: '7', titulo: 'Digno de Alabar', artista: 'Danny Berrios', tonalidad: 'F', enlace: '', letra: '', creadoPor: '' },
+    { id: '8', titulo: 'Tocame', artista: 'Vino Nuevo', tonalidad: 'Bm', enlace: '', letra: '', creadoPor: '' },
+  ];
+
+  state.contenido = [
+    { id: 'c1', fecha: firstSundayStr, turno: 'AM', tipo: 'cancion', contenido: 'Cuan Grande Es Dios', orden: 1, creadoPor: '', cancionId: '1' },
+    { id: 'c2', fecha: firstSundayStr, turno: 'AM', tipo: 'cancion', contenido: 'Grande y Fuerte', orden: 2, creadoPor: '', cancionId: '2' },
+    { id: 'c3', fecha: firstSundayStr, turno: 'AM', tipo: 'nota', contenido: 'Ofrenda antes de la tercera canción', orden: 3, creadoPor: '', cancionId: '' },
+    { id: 'c4', fecha: firstSundayStr, turno: 'PM', tipo: 'cancion', contenido: 'Poderoso Para Salvar', orden: 1, creadoPor: '', cancionId: '3' },
+  ];
 }
 
 // ============================================================
@@ -1381,6 +1574,8 @@ function render() {
     renderDashboard();
   } else if (state.view === 'lista') {
     renderLista();
+  } else if (state.view === 'biblioteca') {
+    renderBiblioteca();
   }
 }
 
@@ -1641,8 +1836,9 @@ function renderNextService(containerId) {
 
   const d = new Date(nextDate + 'T12:00:00');
   const fechaStr = `${DAYS_FULL[d.getDay()]}, ${d.getDate()} de ${MONTHS[d.getMonth()]}`;
+  const dMid = new Date(d); dMid.setHours(0,0,0,0);
   const today = new Date(); today.setHours(0,0,0,0);
-  const diff = Math.round((d - today) / 86400000);
+  const diff = Math.round((dMid - today) / 86400000);
   let countdown = '';
   if (diff === 0) countdown = 'Hoy';
   else if (diff === 1) countdown = 'Mañana';
@@ -1680,7 +1876,7 @@ function renderNextService(containerId) {
         if (urlRegex.test(text)) {
           text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener">$1</a>');
         }
-        return `<div class="ns-contenido-item"><span>📝</span> <span style="white-space:pre-wrap">${text}</span></div>`;
+        return `<div class="ns-contenido-item"><span>${iconMap[item.tipo] || '📝'}</span> <span style="white-space:pre-wrap">${text}</span></div>`;
       }).join('');
     } else {
       html += '<div class="ns-contenido-pending">Contenido pendiente de asignar</div>';
@@ -2319,8 +2515,11 @@ async function handleDrop(e, newDate) {
 // ============================================================
 //  ASSIGN SHIFT MODAL
 // ============================================================
+let pendingAssign = { date: '', turno: '' };
+
 function openAssignShiftModal(date, turno) {
   if (!state.isAdmin) {
+    pendingAssign = { date: date || '', turno: turno || '' };
     showAssignPasswordPrompt();
     return;
   }
@@ -2394,9 +2593,10 @@ function checkAdminPassword() {
         sessionStorage.setItem('adminPass', input);
         state.isAdmin = true;
         sessionStorage.setItem('adminAuth', '1');
+        updateAdminBadge();
         msg.className = 'form-msg success';
         msg.textContent = 'Acceso concedido';
-        setTimeout(() => showAssignForm(), 300);
+        setTimeout(() => showAssignForm(pendingAssign.date, pendingAssign.turno), 300);
       }
     }).catch(() => {
       msg.className = 'form-msg error';
@@ -2654,7 +2854,7 @@ function renderModalBody() {
 
       if (isEditing) {
         html += `<div class="contenido-item editing-contenido">
-          <span class="contenido-icon">📝</span>
+          <span class="contenido-icon">${iconMap[item.tipo] || '📝'}</span>
           <div class="contenido-edit-form" style="flex:1">
             <textarea id="edit-cont-text" rows="2" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;background:white;resize:vertical;">${item.contenido.replace(/"/g, '&quot;')}</textarea>
             <div class="contenido-edit-actions">
@@ -2671,11 +2871,11 @@ function renderModalBody() {
         if (urlRegex.test(text)) {
           text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener">$1</a>');
         }
-        html += `<div class="contenido-item">
-          <span class="contenido-icon">📝</span>
+        html += `<div class="contenido-item tipo-${item.tipo || 'nota'}">
+          <span class="contenido-icon">${iconMap[item.tipo] || '📝'}</span>
           <div class="contenido-text" style="white-space:pre-wrap;word-break:break-word;">
             ${text}
-            ${item.creadoPor ? `<div style="font-size:10px;color:var(--ink-muted);margin-top:2px">— ${item.creadoPor}</div>` : ''}
+            ${item.creadoPor ? `<div style="font-size:10px;color:var(--ink-muted);margin-top:2px">— ${escHtml(item.creadoPor)}</div>` : ''}
           </div>
           <div class="cont-controls">
             <button class="cont-btn move-up" onclick="moveContenido('${item.id}',-1)"${firstItem ? ' disabled' : ''} title="Subir">
@@ -2700,9 +2900,18 @@ function renderModalBody() {
   }
 
   if (modalEditMode) {
+    const songOptions = state.canciones.map(s => `<option value="${s.id}">${escHtml(s.titulo)}${s.tonalidad ? ' (' + escHtml(s.tonalidad) + ')' : ''}</option>`).join('');
     html += `<div class="contenido-form">
       <textarea id="cont-texto" placeholder="Escribe el contenido del turno..." rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;resize:vertical;background:white;"></textarea>
       <button class="btn-add-contenido" onclick="addContenido()">Agregar</button>
+      <div style="border-top:1px dashed var(--border);margin:6px 0 2px;padding-top:10px;font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.06em;">🎵 Agregar canción de la biblioteca</div>
+      <div class="contenido-form-row">
+        <select id="cont-song-select" style="flex:1;width:auto;">
+          <option value="">Seleccionar canción...</option>
+          ${songOptions}
+        </select>
+        <button class="btn-add-contenido" onclick="addSongFromLibrary()">Agregar</button>
+      </div>
       <div class="form-msg" id="cont-msg" style="font-size:11px;min-height:14px"></div>
     </div>`;
   }
@@ -2740,15 +2949,29 @@ async function addContenido() {
     contenido: texto,
     orden,
     creadoPor,
+    cancionId: '',
   };
 
   state.contenido.push(newItem);
   renderModalBody();
+
+  if (IS_DEMO) return;
+  try {
+    const [result] = await sbFetch('contenido', {
+      method: 'POST',
+      body: JSON.stringify({ fecha: modalDate, turno: modalTurno, tipo: 'nota', contenido: texto, orden, creado_por: creadoPor }),
+    });
+    if (result && result.id) newItem.id = String(result.id);
+  } catch (e) { console.error('Error guardando contenido:', e); }
 }
 
 async function deleteContenido(id) {
   state.contenido = state.contenido.filter(c => c.id !== id);
   renderModalBody();
+
+  if (IS_DEMO) return;
+  try { await sbFetch(`contenido?id=eq.${id}`, { method: 'DELETE' }); }
+  catch (e) { console.error('Error eliminando contenido:', e); }
 }
 
 // ============================================================
@@ -2789,6 +3012,10 @@ async function saveContenidoEdit(id) {
 
   editingContenidoId = '';
   renderModalBody();
+
+  if (IS_DEMO) return;
+  try { await sbFetch(`contenido?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify({ contenido: text }) }); }
+  catch (e) { console.error('Error editando contenido:', e); }
 }
 
 function moveContenido(id, direction) {
@@ -2808,6 +3035,343 @@ function moveContenido(id, direction) {
   items[newIdx].orden = tmp;
 
   renderModalBody();
+
+  if (IS_DEMO) return;
+  [items[idx], items[newIdx]].forEach(it => {
+    sbFetch(`contenido?id=eq.${it.id}`, { method: 'PATCH', body: JSON.stringify({ orden: it.orden }) })
+      .catch(e => console.error('Error reordenando contenido:', e));
+  });
+}
+
+// ============================================================
+//  BIBLIOTECA (canciones)
+// ============================================================
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
+function getCancion(id) {
+  return state.canciones.find(c => String(c.id) === String(id));
+}
+
+function renderBiblioteca() {
+  const fechaInput = document.getElementById('deck-fecha');
+  if (fechaInput && !fechaInput.value) fechaInput.value = getNextSunday() || '';
+  renderSongLibrary();
+  renderDeck();
+}
+
+function renderSongLibrary() {
+  const container = document.getElementById('song-list');
+  if (!container) return;
+
+  const q = (songSearch || '').toLowerCase().trim();
+  const canciones = state.canciones
+    .filter(c => !q || (c.titulo + ' ' + (c.artista || '') + ' ' + (c.tonalidad || '')).toLowerCase().includes(q))
+    .sort((a, b) => a.titulo.localeCompare(b.titulo));
+
+  if (!canciones.length) {
+    container.innerHTML = state.canciones.length
+      ? '<div class="song-empty">No se encontraron canciones para la búsqueda.</div>'
+      : '<div class="song-empty">La biblioteca está vacía. Agrega tu primera canción.</div>';
+    return;
+  }
+
+  container.innerHTML = canciones.map(c => `
+    <div class="song-row" draggable="true" ondragstart="songDragStart(event, '${c.id}', 'library')" ondragend="songDragEnd(event)">
+      <span class="song-drag-handle">⠿</span>
+      <span class="song-row-icon">🎵</span>
+      <div class="song-row-info">
+        <div class="song-row-title">${escHtml(c.titulo)}</div>
+        <div class="song-row-artista">${escHtml(c.artista)}</div>
+      </div>
+      ${c.tonalidad ? `<span class="song-card-key">${escHtml(c.tonalidad)}</span>` : ''}
+      <div class="song-row-actions">
+        <button onclick="openSongModal('${c.id}')" title="Editar">✏️</button>
+        <button class="danger" onclick="deleteSong('${c.id}')" title="Eliminar">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderDeck() {
+  const container = document.getElementById('deck-body');
+  const assignBtn = document.getElementById('deck-assign-btn');
+  if (!container) return;
+
+  if (assignBtn) assignBtn.disabled = !state.playlist.length;
+
+  if (!state.playlist.length) {
+    container.innerHTML = '<div class="deck-empty">Arrastra canciones desde la biblioteca para armar la playlist.</div>';
+    return;
+  }
+
+  container.innerHTML = state.playlist.map((id, idx) => {
+    const c = getCancion(id);
+    if (!c) return '';
+    return `
+    <div class="deck-item" draggable="true" ondragstart="songDragStart(event, '${c.id}', 'deck')" ondragend="songDragEnd(event)" ondragover="deckItemDragOver(event)" ondragleave="deckItemDragLeave(event)" ondrop="deckItemDrop(event, '${c.id}')">
+      <span class="deck-num">${idx + 1}</span>
+      <div class="deck-item-title">${escHtml(c.titulo)}</div>
+      ${c.tonalidad ? `<span class="deck-item-key">${escHtml(c.tonalidad)}</span>` : ''}
+      <button class="deck-remove" onclick="removeFromDeck('${c.id}')" title="Quitar">×</button>
+    </div>`;
+  }).join('');
+}
+
+function songDragStart(e, id, source) {
+  dragSongId = id;
+  dragSongSource = source;
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', id); } catch (err) {}
+  e.currentTarget.classList.add('dragging');
+}
+
+function songDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.deck-body').forEach(el => el.classList.remove('drag-over'));
+  document.querySelectorAll('.deck-item').forEach(el => el.classList.remove('drag-over-item'));
+}
+
+function deckDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+
+function deckDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+
+function deckDrop(e) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!dragSongId) return;
+
+  if (dragSongSource === 'library') {
+    if (!state.playlist.includes(dragSongId)) state.playlist.push(dragSongId);
+  } else if (dragSongSource === 'deck') {
+    const arr = state.playlist.filter(x => x !== dragSongId);
+    arr.push(dragSongId);
+    state.playlist = arr;
+  }
+  renderDeck();
+}
+
+function deckItemDragOver(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over-item');
+}
+
+function deckItemDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over-item');
+}
+
+function deckItemDrop(e, targetId) {
+  e.preventDefault();
+  e.stopPropagation();
+  document.querySelectorAll('.deck-item').forEach(el => el.classList.remove('drag-over-item'));
+  if (!dragSongId) return;
+
+  if (dragSongSource === 'library') {
+    if (state.playlist.includes(dragSongId)) return;
+    const arr = state.playlist.filter(x => x !== dragSongId);
+    const idx = arr.indexOf(targetId);
+    arr.splice(idx < 0 ? arr.length : idx, 0, dragSongId);
+    state.playlist = arr;
+  } else if (dragSongSource === 'deck') {
+    if (dragSongId === targetId) return;
+    const arr = state.playlist.filter(x => x !== dragSongId);
+    const idx = arr.indexOf(targetId);
+    arr.splice(idx < 0 ? arr.length : idx, 0, dragSongId);
+    state.playlist = arr;
+  }
+  renderDeck();
+}
+
+function removeFromDeck(id) {
+  state.playlist = state.playlist.filter(x => x !== id);
+  renderDeck();
+}
+
+function clearDeck() {
+  state.playlist = [];
+  renderDeck();
+}
+
+async function assignPlaylistToTurno() {
+  const fecha = document.getElementById('deck-fecha').value;
+  const turno = document.getElementById('deck-turno').value;
+  const msg = document.getElementById('deck-msg');
+
+  if (!state.playlist.length) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Arrastra canciones al deck primero.';
+    return;
+  }
+  if (!fecha) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Selecciona una fecha.';
+    return;
+  }
+
+  const myCollab = getCollab(state.myVolunteerId);
+  const creadoPor = myCollab ? myCollab.name : '';
+
+  const canciones = state.playlist.map(id => getCancion(id)).filter(Boolean);
+  const existing = state.contenido.filter(c => c.fecha === fecha && c.turno === turno).length;
+  const nuevos = [];
+
+  canciones.forEach((c, i) => {
+    const item = {
+      id: 'tmp-' + Date.now() + '-' + i,
+      fecha, turno,
+      tipo: 'cancion',
+      contenido: c.titulo,
+      orden: existing + i + 1,
+      creadoPor,
+      cancionId: c.id,
+    };
+    state.contenido.push(item);
+    nuevos.push(item);
+  });
+
+  state.playlist = [];
+  renderDeck();
+
+  msg.className = 'form-msg success';
+  msg.textContent = canciones.length + (canciones.length === 1 ? ' canción asignada' : ' canciones asignadas') + ' al turno ' + turno + '.';
+
+  if (!IS_DEMO) {
+    for (const item of nuevos) {
+      try {
+        const [result] = await sbFetch('contenido', {
+          method: 'POST',
+          body: JSON.stringify({ fecha, turno, tipo: 'cancion', contenido: item.contenido, orden: item.orden, creado_por: creadoPor, cancion_id: parseInt(item.cancionId) || null }),
+        });
+        if (result && result.id) item.id = String(result.id);
+      } catch (e) { console.error('Error asignando playlist:', e); }
+    }
+  }
+
+  render();
+}
+
+function openSongModal(id) {
+  editingSongId = id || '';
+  if (id) {
+    const c = getCancion(id);
+    if (!c) return;
+    document.getElementById('song-modal-title').textContent = 'Editar canción';
+    document.getElementById('song-titulo').value = c.titulo;
+    document.getElementById('song-artista').value = c.artista || '';
+    document.getElementById('song-tonalidad').value = c.tonalidad || '';
+    document.getElementById('song-enlace').value = c.enlace || '';
+    document.getElementById('song-letra').value = c.letra || '';
+  } else {
+    document.getElementById('song-modal-title').textContent = 'Nueva canción';
+    document.getElementById('song-titulo').value = '';
+    document.getElementById('song-artista').value = '';
+    document.getElementById('song-tonalidad').value = '';
+    document.getElementById('song-enlace').value = '';
+    document.getElementById('song-letra').value = '';
+  }
+  document.getElementById('song-msg').textContent = '';
+  document.getElementById('song-modal').classList.add('open');
+}
+
+function closeSongModal(e) {
+  if (!e || e.target === document.getElementById('song-modal')) {
+    document.getElementById('song-modal').classList.remove('open');
+    editingSongId = '';
+  }
+}
+
+async function saveSong() {
+  const titulo = document.getElementById('song-titulo').value.trim();
+  const artista = document.getElementById('song-artista').value.trim();
+  const tonalidad = document.getElementById('song-tonalidad').value.trim();
+  const enlace = document.getElementById('song-enlace').value.trim();
+  const letra = document.getElementById('song-letra').value.trim();
+  const msg = document.getElementById('song-msg');
+
+  if (!titulo) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'El título es obligatorio.';
+    return;
+  }
+
+  const myCollab = getCollab(state.myVolunteerId);
+  const creadoPor = myCollab ? myCollab.name : '';
+
+  msg.className = 'form-msg';
+  msg.textContent = 'Guardando...';
+
+  if (editingSongId) {
+    const c = getCancion(editingSongId);
+    if (c) {
+      c.titulo = titulo; c.artista = artista; c.tonalidad = tonalidad; c.enlace = enlace; c.letra = letra;
+    }
+    if (!IS_DEMO) {
+      try { await sbFetch(`canciones?id=eq.${editingSongId}`, { method: 'PATCH', body: JSON.stringify({ titulo, artista, tonalidad, enlace, letra }) }); }
+      catch (e) { console.error('Error editando canción:', e); }
+    }
+  } else {
+    const newSong = { id: String(Date.now()), titulo, artista, tonalidad, enlace, letra, creadoPor };
+    state.canciones.push(newSong);
+    if (!IS_DEMO) {
+      try {
+        const [result] = await sbFetch('canciones', { method: 'POST', body: JSON.stringify({ titulo, artista, tonalidad, enlace, letra, creado_por: creadoPor }) });
+        if (result && result.id) newSong.id = String(result.id);
+      } catch (e) { console.error('Error guardando canción:', e); }
+    }
+  }
+
+  closeSongModal();
+  renderBiblioteca();
+}
+
+async function deleteSong(id) {
+  if (!confirm('¿Eliminar esta canción de la biblioteca?')) return;
+  state.canciones = state.canciones.filter(c => c.id !== id);
+  state.playlist = state.playlist.filter(x => x !== id);
+  renderBiblioteca();
+  if (IS_DEMO) return;
+  try { await sbFetch(`canciones?id=eq.${id}`, { method: 'DELETE' }); }
+  catch (e) { console.error('Error eliminando canción:', e); }
+}
+
+async function addSongFromLibrary() {
+  const sel = document.getElementById('cont-song-select');
+  if (!sel || !sel.value) return;
+  const c = getCancion(sel.value);
+  if (!c) return;
+
+  const currentItems = state.contenido.filter(x => x.fecha === modalDate && x.turno === modalTurno);
+  const myCollab = getCollab(state.myVolunteerId);
+
+  const newItem = {
+    id: String(Date.now()),
+    fecha: modalDate,
+    turno: modalTurno,
+    tipo: 'cancion',
+    contenido: c.titulo,
+    orden: currentItems.length + 1,
+    creadoPor: myCollab ? myCollab.name : '',
+    cancionId: c.id,
+  };
+  state.contenido.push(newItem);
+  renderModalBody();
+
+  if (IS_DEMO) return;
+  try {
+    const [result] = await sbFetch('contenido', {
+      method: 'POST',
+      body: JSON.stringify({ fecha: modalDate, turno: modalTurno, tipo: 'cancion', contenido: c.titulo, orden: newItem.orden, creado_por: newItem.creadoPor, cancion_id: parseInt(c.id) || null }),
+    });
+    if (result && result.id) newItem.id = String(result.id);
+  } catch (e) { console.error('Error agregando canción:', e); }
 }
 
 // ============================================================
