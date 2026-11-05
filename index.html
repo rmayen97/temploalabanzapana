@@ -368,6 +368,7 @@
   .modal { background: white; border-radius: 16px; width: 100%; max-width: 480px; padding: 1.75rem; transform: translateY(12px); transition: transform 0.18s; box-shadow: 0 20px 60px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
   .modal-bg.open .modal { transform: translateY(0); }
   .modal-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; }
+  .profile-sub { font-size: 14px; color: var(--ink-muted); margin: -0.5rem 0 1.25rem; line-height: 1.5; }
   .detail-field { display: flex; flex-direction: column; gap: 3px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
   .detail-field:last-of-type { border-bottom: none; }
   .btn-secondary { padding: 10px 16px; background: none; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; color: var(--ink-soft); transition: background 0.12s; width: 100%; margin-top: 1rem; }
@@ -665,6 +666,24 @@
       <button class="btn-continue" id="volunteer-continue-btn" disabled onclick="confirmVolunteer()">Continuar</button>
       <button class="btn-skip" id="volunteer-skip-btn" onclick="skipVolunteer()">Continuar sin seleccionar</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="profile-modal" onclick="closeProfileModal(event)">
+  <div class="modal">
+    <div class="modal-title">Actualiza tus datos</div>
+    <p class="profile-sub">Para enviarte notificaciones por correo, necesitamos tu email y fecha de nacimiento.</p>
+    <div class="form-group">
+      <label class="form-label" for="profile-email">Correo electrónico</label>
+      <input class="form-input" id="profile-email" type="email" placeholder="tu@correo.com" autocomplete="email" />
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="profile-birth">Fecha de nacimiento</label>
+      <input class="form-input" id="profile-birth" type="date" />
+    </div>
+    <div class="form-msg" id="profile-msg"></div>
+    <button class="btn-primary" id="profile-save-btn" onclick="submitProfile()">Guardar</button>
+    <button class="btn-skip" style="width:100%;margin-top:6px;" onclick="closeProfileModal()">Ahora no</button>
   </div>
 </div>
 
@@ -1183,6 +1202,8 @@ async function init() {
         name: c.nombre,
         roles: c.roles || '',
         color: colorFromHex(c.color),
+        email: c.email || '',
+        fecha_nacimiento: c.fecha_nacimiento || '',
       }));
 
       state.shifts = turnosData.map(t => ({
@@ -1258,6 +1279,7 @@ function setMyVolunteer(id) {
   if (id) localStorage.setItem('myVolunteerId', id);
   else localStorage.removeItem('myVolunteerId');
   render();
+  if (id) maybePromptProfile();
 }
 
 // ============================================================
@@ -1300,6 +1322,7 @@ function confirmVolunteer() {
   document.getElementById('change-user-btn').style.display = 'flex';
   updateAdminBadge();
   render();
+  maybePromptProfile();
 }
 
 function skipVolunteer() {
@@ -1331,6 +1354,73 @@ function checkVolunteerModal() {
   } else {
     document.getElementById('volunteer-modal').classList.add('hidden');
     document.getElementById('change-user-btn').style.display = 'flex';
+    maybePromptProfile();
+  }
+}
+
+// ============================================================
+//  ACTUALIZACIÓN DE DATOS (email + fecha de nacimiento)
+// ============================================================
+function maybePromptProfile() {
+  if (!state.myVolunteerId) return;
+  const c = getCollab(state.myVolunteerId);
+  if (!c) return;
+  if (c.email && c.fecha_nacimiento) return;
+  if (sessionStorage.getItem('profilePromptShown') === '1') return;
+  sessionStorage.setItem('profilePromptShown', '1');
+  openProfileModal();
+}
+
+function openProfileModal() {
+  document.getElementById('profile-msg').className = 'form-msg';
+  document.getElementById('profile-msg').textContent = '';
+  document.getElementById('profile-save-btn').disabled = false;
+  document.getElementById('profile-modal').classList.add('open');
+}
+
+function closeProfileModal(e) {
+  if (e && e.target !== document.getElementById('profile-modal')) return;
+  document.getElementById('profile-modal').classList.remove('open');
+}
+
+async function submitProfile() {
+  const email = document.getElementById('profile-email').value.trim();
+  const birth = document.getElementById('profile-birth').value;
+  const msg = document.getElementById('profile-msg');
+  const btn = document.getElementById('profile-save-btn');
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Ingresa un correo válido.';
+    return;
+  }
+  if (!birth) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Selecciona tu fecha de nacimiento.';
+    return;
+  }
+
+  btn.disabled = true;
+  msg.className = 'form-msg';
+  msg.textContent = 'Guardando...';
+
+  try {
+    if (!IS_DEMO) {
+      await sbFetch(`colaboradores?id=eq.${state.myVolunteerId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ email, fecha_nacimiento: birth }),
+      });
+    }
+    const c = getCollab(state.myVolunteerId);
+    if (c) { c.email = email; c.fecha_nacimiento = birth; }
+    msg.className = 'form-msg success';
+    msg.textContent = '¡Datos guardados!';
+    setTimeout(() => closeProfileModal(), 900);
+  } catch (err) {
+    console.error('Error:', err);
+    msg.className = 'form-msg error';
+    msg.textContent = 'No se pudo guardar. Intenta de nuevo.';
+    btn.disabled = false;
   }
 }
 
@@ -1431,6 +1521,7 @@ function loadDemoData() {
     { id:'9', name:'Raquel Orellana',   roles:'Voz Bilingüe (AM)',  color: colorFromHex('#C026D3') },
     { id:'10', name:'Angely Larios',    roles:'Percusión',          color: colorFromHex('#0D9488') },
   ];
+  state.collaborators.forEach(c => { c.email = ''; c.fecha_nacimiento = ''; });
 
   // Generate shifts for the next 8 Sundays (≈2 months)
   const now = new Date();
