@@ -1420,7 +1420,7 @@ function renderMyCard(containerId) {
 
 function loadDemoData() {
   state.collaborators = [
-    { id:'1', name:'Will Deads',       roles:'Guitarra, Voz Lead', color: colorFromHex('#16A34A') },
+    { id:'1', name:'Will Deads',       roles:'Voz Bilingüe, Guitarra', color: colorFromHex('#16A34A') },
     { id:'2', name:'Sherly Larios',    roles:'Voz de Apoyo',       color: colorFromHex('#2563EB') },
     { id:'3', name:'Yonatan Castro',   roles:'Percusión',          color: colorFromHex('#DB2777') },
     { id:'4', name:'Sam Castro',        roles:'Bajo, Guitarra',     color: colorFromHex('#D97706') },
@@ -1438,25 +1438,17 @@ function loadDemoData() {
   sunday.setDate(sunday.getDate() + (7 - sunday.getDay()) % 7);
   if (sunday < now) sunday.setDate(sunday.getDate() + 7);
 
-  // Weekly rotation: 4 patterns cycling every 4 weeks
-  // AM = servicio bilingüe (Raquel en voz, guitarras/bajo: Rodrigo, Daniel, Sam)
-  // PM = servicio en español (Herdy lidera voz)
+  // Rotación semanal: 2 patrones alternados
+  // AM = servicio bilingüe (Will lidera voz + guitarra, fijo)
+  // PM = servicio en español (Raquel y Herdy alternan Voz Lead semana a semana)
   const rotation = [
-    { // Semana 1 — Will participa
-      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'1', rol:'Guitarra, Voz Lead' }, { collabId:'4', rol:'Bajo' }, { collabId:'3', rol:'Percusión' }],
-      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'8', rol:'Guitarra' }, { collabId:'10', rol:'Percusión' }]
+    { // Semana impar — Raquel PM, doble turno Sam
+      AM: [{ collabId:'1', rol:'Voz Bilingüe, Guitarra' }, { collabId:'5', rol:'Voz de Apoyo' }, { collabId:'4', rol:'Bajo' }, { collabId:'3', rol:'Percusión' }],
+      PM: [{ collabId:'9', rol:'Voz Lead' }, { collabId:'2', rol:'Voz de Apoyo' }, { collabId:'8', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }, { collabId:'10', rol:'Percusión' }]
     },
-    { // Semana 2 — Will participa
-      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'8', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }, { collabId:'1', rol:'Voz de Apoyo' }],
-      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'3', rol:'Percusión' }, { collabId:'7', rol:'Guitarra' }, { collabId:'2', rol:'Voz de Apoyo' }]
-    },
-    { // Semana 3
-      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'7', rol:'Guitarra' }, { collabId:'8', rol:'Bajo' }, { collabId:'10', rol:'Percusión' }],
-      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'2', rol:'Voz de Apoyo' }, { collabId:'4', rol:'Guitarra' }, { collabId:'3', rol:'Percusión' }]
-    },
-    { // Semana 4 — Herdy apoya en AM
-      AM: [{ collabId:'9', rol:'Voz Bilingüe' }, { collabId:'7', rol:'Guitarra' }, { collabId:'4', rol:'Bajo' }, { collabId:'5', rol:'Voz de Apoyo' }],
-      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'8', rol:'Guitarra' }, { collabId:'10', rol:'Percusión' }]
+    { // Semana par — Herdy PM, doble turno Daniel
+      AM: [{ collabId:'1', rol:'Voz Bilingüe, Guitarra' }, { collabId:'2', rol:'Voz de Apoyo' }, { collabId:'8', rol:'Bajo' }, { collabId:'10', rol:'Percusión' }],
+      PM: [{ collabId:'5', rol:'Voz Lead' }, { collabId:'6', rol:'Voz de Apoyo' }, { collabId:'7', rol:'Guitarra' }, { collabId:'8', rol:'Bajo' }, { collabId:'3', rol:'Percusión' }]
     }
   ];
 
@@ -1468,7 +1460,7 @@ function loadDemoData() {
     const s = new Date(sunday);
     s.setDate(s.getDate() + w * 7);
     const ds = dateToStr(s);
-    const r = rotation[w % 4];
+    const r = rotation[w % 2];
 
     r.AM.forEach(a => {
       state.shifts.push({ id: 's' + (sid++), date: ds, turno: 'AM', collabId: a.collabId, rol: a.rol, notas: '' });
@@ -1478,28 +1470,19 @@ function loadDemoData() {
     });
   }
 
-  // Will Deads no disponible desde el 28 de junio
-  const WILL_CUTOFF = '2026-06-28';
+  // Daniel Ajanel no disponible del 1 al 29 de noviembre (vuelve el 6 de diciembre)
+  const DANIEL_CUTOFF_START = '2026-11-01';
+  const DANIEL_CUTOFF_END = '2026-11-29';
   const allDates = [...new Set(state.shifts.map(s => s.date))].sort();
-  const affectedDates = allDates.filter(d => d >= WILL_CUTOFF);
-  state.shifts = state.shifts.filter(s => !(s.date >= WILL_CUTOFF && s.collabId === '1'));
+  const affectedDates = allDates.filter(d => d >= DANIEL_CUTOFF_START && d <= DANIEL_CUTOFF_END);
 
-  // Reasignar turnos de Will a otros voluntarios a partir del 28 de junio
-  const substitutes = ['7', '10', '2']; // Rodrigo (Guitarra), Angely (Percusión), Sherly (Voz Apoyo)
-  let subIdx = 0;
-  affectedDates.forEach(ds => {
-    ['AM', 'PM'].forEach(turno => {
-      const existing = state.shifts.filter(sh => sh.date === ds && sh.turno === turno);
-      if (existing.length < 4) {
-        const subId = substitutes[subIdx % substitutes.length];
-        const sub = getCollab(subId);
-        state.shifts.push({
-          id: 's' + (sid++), date: ds, turno, collabId: subId,
-          rol: sub ? sub.roles.split(',')[0].trim() : 'Apoyo', notas: ''
-        });
-        subIdx++;
-      }
-    });
+  // Reasignar turnos de Daniel a sustitutos según rol
+  state.shifts.forEach(s => {
+    if (s.date >= DANIEL_CUTOFF_START && s.date <= DANIEL_CUTOFF_END && s.collabId === '8') {
+      if (s.rol === 'Bajo' && s.turno === 'AM') s.collabId = '7';      // Rodrigo
+      else if (s.rol === 'Bajo' && s.turno === 'PM') s.collabId = '4'; // Sam
+      else s.collabId = '7';                                            // Guitarra / otros → Rodrigo
+    }
   });
   state.shifts.sort((a, b) => a.date.localeCompare(b.date) || a.turno.localeCompare(b.turno));
 
@@ -1508,12 +1491,12 @@ function loadDemoData() {
     { id:'a1', date: firstSundayStr, collabId:'3', turno:'AM', motivo:'Viaje familiar' },
   ];
 
-  // Registrar ausencia de Will Deads desde el 28 de junio
+  // Registrar ausencia de Daniel Ajanel en noviembre
   affectedDates.forEach((ds, i) => {
     state.ausencias.push({
       id: 'a' + (10 + i),
-      date: ds, collabId: '1', turno: 'Ambos',
-      motivo: 'Indisponible hasta nuevo aviso',
+      date: ds, collabId: '8', turno: 'Ambos',
+      motivo: 'Indisponible (noviembre)',
       estado: 'Aprobada',
     });
   });
