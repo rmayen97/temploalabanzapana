@@ -5,6 +5,24 @@
 <meta name="version" content="2.1">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Turnos — Templo de Alabanza Panajachel</title>
+<!-- BETA:START -->
+<script>
+// Diseño nuevo (beta): quien lo eligió entra directo a nuevo.html.
+// ?diseno=nuevo o ?diseno=clasico en el link fuerzan uno u otro.
+(function () {
+  try {
+    var p = new URLSearchParams(location.search);
+    var d = p.get('diseno');
+    if (d === 'nuevo' || d === 'clasico') localStorage.setItem('diseno', d);
+    if (localStorage.getItem('diseno') === 'nuevo') {
+      p.delete('diseno');
+      var q = d ? p.toString() : location.search.slice(1);
+      location.replace('nuevo.html' + (q ? '?' + q : '') + location.hash);
+    }
+  } catch (e) {}
+})();
+</script>
+<!-- BETA:END -->
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,500;0,700;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
@@ -665,6 +683,23 @@
     .contenido-item .cont-controls { gap: 1px; }
     .cont-btn svg { width: 11px; height: 11px; }
   }
+  /* BETA:START */
+  .beta-invite { position: fixed; left: 50%; bottom: 20px; transform: translate(-50%, 140%); z-index: 120; width: calc(100% - 32px); max-width: 520px;
+    display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 18px; color: #fff; overflow: hidden; isolation: isolate;
+    background: #0B3B2E; box-shadow: 0 20px 40px -12px rgba(6,78,59,.55); transition: transform .45s cubic-bezier(.2,.8,.2,1); }
+  .beta-invite::before { content: ""; position: absolute; inset: -60%; z-index: -1; filter: blur(30px);
+    background: radial-gradient(40% 50% at 15% 30%, #34D399, transparent 70%), radial-gradient(40% 60% at 80% 40%, #22D3EE, transparent 70%), radial-gradient(40% 50% at 60% 100%, #6366F1, transparent 70%); }
+  .beta-invite.show { transform: translate(-50%, 0); }
+  .beta-icon { font-size: 22px; flex-shrink: 0; }
+  .beta-text { flex: 1; min-width: 0; font-size: 13px; line-height: 1.35; }
+  .beta-text b { display: block; font-size: 14px; margin-bottom: 2px; }
+  .beta-text span { opacity: .85; }
+  .beta-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+  .beta-actions button { font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 10px; cursor: pointer; border: 0; }
+  .beta-try { background: #fff; color: #0B3B2E; box-shadow: 0 6px 14px -6px rgba(0,0,0,.4); }
+  .beta-later { background: rgba(255,255,255,.14); color: #fff; }
+  @media (max-width: 480px) { .beta-invite { bottom: 76px; } }
+  /* BETA:END */
 </style>
 </head>
 <body>
@@ -1057,6 +1092,35 @@
   <option value="Guitarra, Bajo">
   <option value="Percusión">
 </datalist>
+
+<!-- BETA:START -->
+<div class="beta-invite" id="beta-invite" role="dialog" aria-label="Probar el nuevo diseño">
+  <div class="beta-icon">✨</div>
+  <div class="beta-text"><b>¿Quieres probar el nuevo diseño?</b><span>Más moderno y cómodo en el celular. Puedes volver a este cuando quieras.</span></div>
+  <div class="beta-actions">
+    <button class="beta-try" onclick="tryNewDesign()">Probar</button>
+    <button class="beta-later" onclick="dismissNewDesign()">Ahora no</button>
+  </div>
+</div>
+<script>
+function tryNewDesign() {
+  try { localStorage.setItem('diseno', 'nuevo'); } catch (e) {}
+  location.href = 'nuevo.html' + location.search + location.hash;
+}
+function dismissNewDesign() {
+  try { localStorage.setItem('disenoAviso', String(Date.now())); } catch (e) {}
+  document.getElementById('beta-invite').classList.remove('show');
+}
+function maybeShowNewDesignInvite() {
+  try {
+    var last = Number(localStorage.getItem('disenoAviso') || 0);
+    if (Date.now() - last < 7 * 24 * 3600 * 1000) return; // no molestar por 7 días
+  } catch (e) {}
+  setTimeout(function () { document.getElementById('beta-invite').classList.add('show'); }, 1800);
+}
+window.addEventListener('load', maybeShowNewDesignInvite);
+</script>
+<!-- BETA:END -->
 
 <script>
 // ============================================================
