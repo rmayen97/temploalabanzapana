@@ -368,7 +368,6 @@
   .modal { background: white; border-radius: 16px; width: 100%; max-width: 480px; padding: 1.75rem; transform: translateY(12px); transition: transform 0.18s; box-shadow: 0 20px 60px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
   .modal-bg.open .modal { transform: translateY(0); }
   .modal-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 500; margin-bottom: 1.25rem; }
-  .profile-sub { font-size: 14px; color: var(--ink-muted); margin: -0.5rem 0 1.25rem; line-height: 1.5; }
   .detail-field { display: flex; flex-direction: column; gap: 3px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
   .detail-field:last-of-type { border-bottom: none; }
   .btn-secondary { padding: 10px 16px; background: none; border: 1px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; color: var(--ink-soft); transition: background 0.12s; width: 100%; margin-top: 1rem; }
@@ -605,7 +604,8 @@
   /* VOLUNTEER MODAL */
   .volunteer-modal { position: fixed; inset: 0; background: var(--cream); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1.5rem; transition: opacity 0.3s, visibility 0.3s; }
   .volunteer-modal.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-  .volunteer-modal-content { background: white; border-radius: 20px; width: 100%; max-width: 520px; padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.12); }
+  .volunteer-modal-content { background: white; border-radius: 20px; width: 100%; max-width: 520px; padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.12); max-height: 92vh; overflow-y: auto; }
+  .volunteer-profile-fields { border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 0.25rem; }
   .volunteer-modal-header { text-align: center; margin-bottom: 1.5rem; }
   .volunteer-modal-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--forest); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; }
   .volunteer-modal-icon::after { content: ''; width: 20px; height: 20px; border: 2px solid white; border-radius: 50%; }
@@ -653,37 +653,30 @@
 </style>
 </head>
 <body>
-<!-- Modal de Selección de Voluntario -->
+<!-- Modal de Selección de Voluntario + Datos -->
 <div class="volunteer-modal hidden" id="volunteer-modal">
   <div class="volunteer-modal-content">
     <div class="volunteer-modal-header">
       <div class="volunteer-modal-icon"></div>
       <h2>¿Quién eres?</h2>
-      <p>Selecciona tu nombre para ver tus turnos</p>
+      <p>Selecciona tu nombre y completa tus datos</p>
     </div>
     <div class="volunteer-grid" id="volunteer-grid"></div>
+    <div class="volunteer-profile-fields" id="volunteer-profile-fields">
+      <div class="form-group">
+        <label class="form-label" for="profile-email">Correo electrónico</label>
+        <input class="form-input" id="profile-email" type="email" placeholder="tu@correo.com" autocomplete="email" oninput="updateContinueBtn()" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="profile-birth">Fecha de nacimiento</label>
+        <input class="form-input" id="profile-birth" type="date" oninput="updateContinueBtn()" />
+      </div>
+      <div class="form-msg" id="profile-msg"></div>
+    </div>
     <div class="volunteer-modal-footer">
-      <button class="btn-continue" id="volunteer-continue-btn" disabled onclick="confirmVolunteer()">Continuar</button>
+      <button class="btn-continue" id="volunteer-continue-btn" disabled onclick="confirmVolunteer()">Guardar</button>
       <button class="btn-skip" id="volunteer-skip-btn" onclick="skipVolunteer()">Continuar sin seleccionar</button>
     </div>
-  </div>
-</div>
-
-<div class="modal-bg" id="profile-modal" onclick="closeProfileModal(event)">
-  <div class="modal">
-    <div class="modal-title">Actualiza tus datos</div>
-    <p class="profile-sub">Para enviarte notificaciones por correo, necesitamos tu email y fecha de nacimiento.</p>
-    <div class="form-group">
-      <label class="form-label" for="profile-email">Correo electrónico</label>
-      <input class="form-input" id="profile-email" type="email" placeholder="tu@correo.com" autocomplete="email" />
-    </div>
-    <div class="form-group">
-      <label class="form-label" for="profile-birth">Fecha de nacimiento</label>
-      <input class="form-input" id="profile-birth" type="date" />
-    </div>
-    <div class="form-msg" id="profile-msg"></div>
-    <button class="btn-primary" id="profile-save-btn" onclick="submitProfile()">Guardar</button>
-    <button class="btn-skip" style="width:100%;margin-top:6px;" onclick="closeProfileModal()">Ahora no</button>
   </div>
 </div>
 
@@ -1279,7 +1272,7 @@ function setMyVolunteer(id) {
   if (id) localStorage.setItem('myVolunteerId', id);
   else localStorage.removeItem('myVolunteerId');
   render();
-  if (id) maybePromptProfile();
+  if (id && !profileComplete(getCollab(id))) openVolunteerModal();
 }
 
 // ============================================================
@@ -1291,7 +1284,7 @@ function openVolunteerModal() {
   selectedVolunteerId = state.myVolunteerId;
   const modal = document.getElementById('volunteer-modal');
   const grid = document.getElementById('volunteer-grid');
-  const continueBtn = document.getElementById('volunteer-continue-btn');
+  const skipBtn = document.getElementById('volunteer-skip-btn');
 
   grid.innerHTML = state.collaborators.map(c => {
     const isSelected = c.id === selectedVolunteerId;
@@ -1302,7 +1295,16 @@ function openVolunteerModal() {
     </div>`;
   }).join('');
 
-  continueBtn.disabled = !selectedVolunteerId;
+  const c = getCollab(selectedVolunteerId);
+  document.getElementById('profile-email').value = (c && c.email) || '';
+  document.getElementById('profile-birth').value = (c && c.fecha_nacimiento) || '';
+  const msg = document.getElementById('profile-msg');
+  msg.className = 'form-msg';
+  msg.textContent = '';
+
+  skipBtn.style.display = state.myVolunteerId ? 'none' : 'block';
+
+  updateContinueBtn();
   modal.classList.remove('hidden');
 }
 
@@ -1310,19 +1312,54 @@ function selectVolunteer(id, el) {
   selectedVolunteerId = id;
   document.querySelectorAll('.volunteer-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
-  document.getElementById('volunteer-continue-btn').disabled = false;
+  updateContinueBtn();
 }
 
-function confirmVolunteer() {
+async function confirmVolunteer() {
   if (!selectedVolunteerId) return;
-  state.myVolunteerId = selectedVolunteerId;
-  localStorage.setItem('myVolunteerId', selectedVolunteerId);
-  document.getElementById('volunteer-modal').classList.add('hidden');
-  document.getElementById('my-volunteer').value = selectedVolunteerId;
-  document.getElementById('change-user-btn').style.display = 'flex';
-  updateAdminBadge();
-  render();
-  maybePromptProfile();
+  const email = document.getElementById('profile-email').value.trim();
+  const birth = document.getElementById('profile-birth').value;
+  const msg = document.getElementById('profile-msg');
+  const btn = document.getElementById('volunteer-continue-btn');
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Ingresa un correo válido.';
+    return;
+  }
+  if (!birth) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Selecciona tu fecha de nacimiento.';
+    return;
+  }
+
+  btn.disabled = true;
+  msg.className = 'form-msg';
+  msg.textContent = 'Guardando...';
+
+  try {
+    if (!IS_DEMO) {
+      await sbFetch(`colaboradores?id=eq.${selectedVolunteerId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ email, fecha_nacimiento: birth }),
+      });
+    }
+    const c = getCollab(selectedVolunteerId);
+    if (c) { c.email = email; c.fecha_nacimiento = birth; }
+
+    state.myVolunteerId = selectedVolunteerId;
+    localStorage.setItem('myVolunteerId', selectedVolunteerId);
+    document.getElementById('volunteer-modal').classList.add('hidden');
+    document.getElementById('my-volunteer').value = selectedVolunteerId;
+    document.getElementById('change-user-btn').style.display = 'flex';
+    updateAdminBadge();
+    render();
+  } catch (err) {
+    console.error('Error:', err);
+    msg.className = 'form-msg error';
+    msg.textContent = 'No se pudo guardar. Intenta de nuevo.';
+    btn.disabled = false;
+  }
 }
 
 function skipVolunteer() {
@@ -1349,79 +1386,36 @@ function logoutAdmin() {
 function checkVolunteerModal() {
   if (!state.collaborators.length) return;
   updateAdminBadge();
-  if (!state.myVolunteerId) {
+  const me = getCollab(state.myVolunteerId);
+  if (!state.myVolunteerId || !me) {
     openVolunteerModal();
-  } else {
-    document.getElementById('volunteer-modal').classList.add('hidden');
-    document.getElementById('change-user-btn').style.display = 'flex';
-    maybePromptProfile();
+    return;
   }
+  if (!profileComplete(me)) {
+    if (sessionStorage.getItem('profilePromptShown') !== '1') {
+      sessionStorage.setItem('profilePromptShown', '1');
+      openVolunteerModal();
+      return;
+    }
+  }
+  document.getElementById('volunteer-modal').classList.add('hidden');
+  document.getElementById('change-user-btn').style.display = 'flex';
 }
 
 // ============================================================
 //  ACTUALIZACIÓN DE DATOS (email + fecha de nacimiento)
 // ============================================================
-function maybePromptProfile() {
-  if (!state.myVolunteerId) return;
-  const c = getCollab(state.myVolunteerId);
-  if (!c) return;
-  if (c.email && c.fecha_nacimiento) return;
-  if (sessionStorage.getItem('profilePromptShown') === '1') return;
-  sessionStorage.setItem('profilePromptShown', '1');
-  openProfileModal();
+function profileComplete(c) {
+  return !!(c && c.email && c.fecha_nacimiento);
 }
 
-function openProfileModal() {
-  document.getElementById('profile-msg').className = 'form-msg';
-  document.getElementById('profile-msg').textContent = '';
-  document.getElementById('profile-save-btn').disabled = false;
-  document.getElementById('profile-modal').classList.add('open');
-}
-
-function closeProfileModal(e) {
-  if (e && e.target !== document.getElementById('profile-modal')) return;
-  document.getElementById('profile-modal').classList.remove('open');
-}
-
-async function submitProfile() {
+function updateContinueBtn() {
   const email = document.getElementById('profile-email').value.trim();
   const birth = document.getElementById('profile-birth').value;
-  const msg = document.getElementById('profile-msg');
-  const btn = document.getElementById('profile-save-btn');
-
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    msg.className = 'form-msg error';
-    msg.textContent = 'Ingresa un correo válido.';
-    return;
-  }
-  if (!birth) {
-    msg.className = 'form-msg error';
-    msg.textContent = 'Selecciona tu fecha de nacimiento.';
-    return;
-  }
-
-  btn.disabled = true;
-  msg.className = 'form-msg';
-  msg.textContent = 'Guardando...';
-
-  try {
-    if (!IS_DEMO) {
-      await sbFetch(`colaboradores?id=eq.${state.myVolunteerId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ email, fecha_nacimiento: birth }),
-      });
-    }
-    const c = getCollab(state.myVolunteerId);
-    if (c) { c.email = email; c.fecha_nacimiento = birth; }
-    msg.className = 'form-msg success';
-    msg.textContent = '¡Datos guardados!';
-    setTimeout(() => closeProfileModal(), 900);
-  } catch (err) {
-    console.error('Error:', err);
-    msg.className = 'form-msg error';
-    msg.textContent = 'No se pudo guardar. Intenta de nuevo.';
-    btn.disabled = false;
-  }
+  const valid = !!selectedVolunteerId
+    && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    && !!birth;
+  document.getElementById('volunteer-continue-btn').disabled = !valid;
 }
 
 function renderMyCard(containerId) {
@@ -2174,6 +2168,8 @@ async function submitAbsence() {
 
     const colab = getCollab(collabId);
     const nombre = colab ? colab.name : collabId;
+    const solicitante = getCollab(state.myVolunteerId);
+    const solicitanteEmail = solicitante && solicitante.email ? solicitante.email : '';
     const absData = JSON.stringify({
       action: 'addAusencia',
       colaboradorId: collabId,
@@ -2181,8 +2177,9 @@ async function submitAbsence() {
       fecha: date,
       turno: turno,
       motivo: motivo,
+      solicitanteEmail: solicitanteEmail,
     });
-    fetch('https://script.google.com/macros/s/AKfycbzPLaa2sLIo5Wu-eBsVRHLyCpziJLkZthOChY5Y3OEpiJOEW-_DSOKS0hyqGe5zkp4TFA/exec', {
+    fetch('https://script.google.com/macros/s/AKfycbxFKzR9Wp-fLbom4RabCeJDI89Le9C3QRSB5jg7D8aRpURPtTG9C5wOs0ax0dxOxhv2/exec', {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
