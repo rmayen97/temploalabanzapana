@@ -631,6 +631,21 @@
   .admin-badge { position: fixed; bottom: 20px; right: 170px; background: var(--amber); color: white; border: none; border-radius: 24px; padding: 8px 14px; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; box-shadow: var(--shadow); transition: all 0.15s; z-index: 50; }
   .admin-badge:hover { background: #B45309; transform: translateY(-1px); }
 
+  /* ADMIN PROFILES */
+  .admin-profile-lock { max-width: 420px; margin: 0 auto; padding: 1.5rem 0; }
+  .admin-profile-lock .section-title { text-align: center; margin-bottom: 8px; }
+  .admin-profile-row { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; margin-bottom: 8px; background: white; flex-wrap: wrap; }
+  .admin-profile-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px; flex-shrink: 0; }
+  .admin-profile-info { min-width: 150px; flex: 0 0 auto; }
+  .admin-profile-name { font-weight: 600; font-size: 14px; }
+  .admin-profile-roles { font-size: 12px; color: var(--ink-muted); }
+  .admin-profile-fields { display: flex; gap: 8px; flex: 1; min-width: 260px; flex-wrap: wrap; align-items: center; }
+  .admin-profile-fields .form-input { width: auto; flex: 1; min-width: 150px; }
+  .admin-profile-fields .btn-primary { width: auto; flex: 0 0 auto; padding: 9px 16px; }
+  .admin-status { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+  .admin-status.ok { background: #DCFCE7; color: #15803D; }
+  .admin-status.bad { background: #FEE2E2; color: #DC2626; }
+
   @media (max-width: 480px) {
     .week-grid { grid-template-columns: 36px repeat(7, 1fr); }
     .day-name { font-size: 9px; }
@@ -706,6 +721,7 @@
     <button class="tab-btn" onclick="switchView('lista')">Lista</button>
     <button class="tab-btn" onclick="switchView('biblioteca')">Biblioteca</button>
     <button class="tab-btn" onclick="switchView('dashboard')">Dashboard</button>
+    <button class="tab-btn" onclick="switchView('admin')">Admin</button>
     <select class="my-select" id="my-volunteer" onchange="setMyVolunteer(this.value)">
       <option value="">Todos</option>
     </select>
@@ -852,6 +868,24 @@
     <div id="dashboard-summary"></div>
     <div id="dashboard-grid"></div>
     <div id="dashboard-gaps"></div>
+  </div>
+
+  <!-- ==================== ADMIN ==================== -->
+  <div class="view-panel" id="view-admin">
+    <div class="nav-bar">
+      <div class="nav-title"><em>Admin</em> Perfiles del Equipo</div>
+    </div>
+    <div id="admin-profiles-lock" class="admin-profile-lock">
+      <div class="section-title">Acceso restringido</div>
+      <p style="color:var(--ink-muted);margin:0 0 12px;">Ingresa la contraseña de administrador.</p>
+      <input type="password" id="admin-profiles-pass" class="form-input" placeholder="Contraseña" style="margin-bottom:8px;" onkeydown="if(event.key==='Enter')checkAdminProfilesPass()" />
+      <button class="btn-primary" onclick="checkAdminProfilesPass()">Desbloquear</button>
+      <div class="form-msg" id="admin-profiles-msg"></div>
+    </div>
+    <div id="admin-profiles-content" style="display:none;">
+      <div class="section-title">Colaboradores y registro <span style="font-weight:400;color:var(--ink-muted);font-size:12px;">— email + fecha de nacimiento</span></div>
+      <div id="admin-profiles-list"></div>
+    </div>
   </div>
 
   <!-- ==================== BIBLIOTECA ==================== -->
@@ -1644,6 +1678,107 @@ function render() {
     renderLista();
   } else if (state.view === 'biblioteca') {
     renderBiblioteca();
+  } else if (state.view === 'admin') {
+    renderAdmin();
+  }
+}
+
+// ============================================================
+//  ADMIN — PERFILES
+// ============================================================
+function renderAdmin() {
+  const lock = document.getElementById('admin-profiles-lock');
+  const content = document.getElementById('admin-profiles-content');
+  if (!state.isAdmin) {
+    lock.style.display = 'block';
+    content.style.display = 'none';
+    return;
+  }
+  lock.style.display = 'none';
+  content.style.display = 'block';
+  renderAdminProfiles();
+}
+
+async function checkAdminProfilesPass() {
+  const input = document.getElementById('admin-profiles-pass').value;
+  const msg = document.getElementById('admin-profiles-msg');
+
+  if (!input) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Ingresa la contraseña.';
+    return;
+  }
+  msg.className = 'form-msg';
+  msg.textContent = 'Verificando...';
+
+  try {
+    const data = await sbFetch('config?key=eq.admin_password');
+    const storedPass = data[0]?.value || '';
+    if (input !== storedPass) {
+      msg.className = 'form-msg error';
+      msg.textContent = 'Contraseña incorrecta.';
+      document.getElementById('admin-profiles-pass').value = '';
+      return;
+    }
+    sessionStorage.setItem('adminPass', input);
+    sessionStorage.setItem('adminAuth', '1');
+    state.isAdmin = true;
+    updateAdminBadge();
+    document.getElementById('admin-profiles-pass').value = '';
+    msg.textContent = '';
+    renderAdmin();
+  } catch (e) {
+    msg.className = 'form-msg error';
+    msg.textContent = 'Error de conexión.';
+  }
+}
+
+function renderAdminProfiles() {
+  const list = document.getElementById('admin-profiles-list');
+  const cols = state.collaborators.filter(c => c.id !== '11');
+  list.innerHTML = cols.map(c => {
+    const complete = profileComplete(c);
+    const status = complete
+      ? '<span class="admin-status ok">✓ Completo</span>'
+      : '<span class="admin-status bad">✗ Incompleto</span>';
+    return `<div class="admin-profile-row">
+      <div class="admin-profile-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
+      <div class="admin-profile-info">
+        <div class="admin-profile-name">${c.name}</div>
+        <div class="admin-profile-roles">${c.roles}</div>
+      </div>
+      ${status}
+      <div class="admin-profile-fields">
+        <input class="form-input" id="admin-email-${c.id}" type="email" placeholder="Correo" value="${c.email || ''}" />
+        <input class="form-input" id="admin-birth-${c.id}" type="date" value="${c.fecha_nacimiento || ''}" />
+        <button class="btn-primary" onclick="adminSaveProfile('${c.id}')">Guardar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function adminSaveProfile(collabId) {
+  const email = document.getElementById('admin-email-' + collabId).value.trim();
+  const birth = document.getElementById('admin-birth-' + collabId).value;
+
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    alert('Correo inválido.');
+    return;
+  }
+
+  try {
+    if (!IS_DEMO) {
+      await sbFetch(`colaboradores?id=eq.${collabId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ email: email || null, fecha_nacimiento: birth || null }),
+      });
+    }
+    const c = getCollab(collabId);
+    if (c) { c.email = email; c.fecha_nacimiento = birth; }
+    renderAdminProfiles();
+  } catch (e) {
+    console.error('Error:', e);
+    alert('Error al guardar.');
   }
 }
 
