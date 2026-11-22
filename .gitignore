@@ -3,3 +3,6 @@
 
 # Google Apps Script (contiene contraseña del servidor)
 appscript.js
+
+# Notas locales
+PROYECTO_NOTAS.md

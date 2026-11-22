@@ -1089,6 +1089,37 @@ function getAdminPassword() {
   return sessionStorage.getItem('adminPass') || '';
 }
 
+// Llamadas a funciones (RPC) de Supabase. La contraseña de admin se
+// verifica en el servidor; la página nunca la descarga.
+function sbRpc(fn, args = {}) {
+  return sbFetch('rpc/' + fn, { method: 'POST', body: JSON.stringify(args) });
+}
+
+async function verifyAdminPass(pass) {
+  if (IS_DEMO) return true;
+  return (await sbRpc('es_admin', { p_pass: pass })) === true;
+}
+
+function clearAdminSession() {
+  state.isAdmin = false;
+  sessionStorage.removeItem('adminAuth');
+  sessionStorage.removeItem('adminPass');
+  updateAdminBadge();
+}
+
+async function adminRpc(fn, args = {}) {
+  if (IS_DEMO) return fn === 'admin_crear_turno' ? [{ id: Date.now() }] : null;
+  try {
+    return await sbRpc(fn, { p_pass: getAdminPassword(), ...args });
+  } catch (e) {
+    if (String(e.message).includes('Contraseña incorrecta')) {
+      clearAdminSession();
+      alert('Tu sesión de administrador expiró. Vuelve a ingresar la contraseña.');
+    }
+    throw e;
+  }
+}
+
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const DAYS_SHORT = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const DAYS_FULL = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -1162,14 +1193,15 @@ function dateToStr(d) {
 function todayStr() { return dateToStr(new Date()); }
 
 function colorFromHex(hex) {
-  if (!hex) return COLOR_MAP[7];
+  if (!hex || !/^#[0-9a-f]{3,8}$/i.test(String(hex).trim())) return COLOR_MAP[7];
+  hex = String(hex).trim();
   const normalized = hex.toLowerCase();
   const found = COLOR_MAP.find(c => c.hex.toLowerCase() === normalized);
   return found || { hex, bg: '#F1F5F9', fg: '#475569' };
 }
 
 function initials(name) {
-  return name.split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+  return escHtml(String(name || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase());
 }
 
 function getCollab(id) {
@@ -1216,17 +1248,10 @@ async function init() {
   IS_DEMO = useDemo;
 
   try {
-    // Fetch admin password from config
-    let adminPass = '';
-    try {
-      const configData = await sbFetch('config?key=eq.admin_password');
-      adminPass = configData[0]?.value || '';
-    } catch (e) { /* config table might not exist yet */ }
-
     if (!useDemo) {
       // Fetch all data from Supabase
       const [collabs, turnosData, ausenciasData] = await Promise.all([
-        sbFetch('colaboradores?select=*&order=id'),
+        sbFetch('colaboradores_publico?select=*&order=id'),
         sbFetch('turnos?select=*&order=fecha'),
         sbFetch('ausencias?select=*&order=fecha'),
       ]);
@@ -1236,8 +1261,9 @@ async function init() {
         name: c.nombre,
         roles: c.roles || '',
         color: colorFromHex(c.color),
-        email: c.email || '',
-        fecha_nacimiento: c.fecha_nacimiento || '',
+        email: '',
+        fecha_nacimiento: '',
+        perfilCompleto: !!c.perfil_completo,
       }));
 
       state.shifts = turnosData.map(t => ({
@@ -1305,7 +1331,7 @@ async function init() {
 function populateMySelect() {
   const select = document.getElementById('my-volunteer');
   select.innerHTML = '<option value="">Todos</option>' +
-    state.collaborators.map(c => `<option value="${c.id}"${c.id === state.myVolunteerId ? ' selected' : ''}>${c.name}</option>`).join('');
+    state.collaborators.map(c => `<option value="${c.id}"${c.id === state.myVolunteerId ? ' selected' : ''}>${escHtml(c.name)}</option>`).join('');
 }
 
 function setMyVolunteer(id) {
@@ -1331,8 +1357,8 @@ function openVolunteerModal() {
     const isSelected = c.id === selectedVolunteerId;
     return `<div class="volunteer-card${isSelected ? ' selected' : ''}" onclick="selectVolunteer('${c.id}', this)">
       <div class="volunteer-card-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
-      <div class="volunteer-card-name">${c.name}</div>
-      <div class="volunteer-card-role">${c.roles.split(',')[0].trim()}</div>
+      <div class="volunteer-card-name">${escHtml(c.name)}</div>
+      <div class="volunteer-card-role">${escHtml(c.roles.split(',')[0].trim())}</div>
     </div>`;
   }).join('');
 
@@ -1403,7 +1429,7 @@ function checkVolunteerModal() {
 //  ACTUALIZACIÓN DE DATOS (email + fecha de nacimiento)
 // ============================================================
 function profileComplete(c) {
-  return !!(c && c.email && c.fecha_nacimiento);
+  return !!(c && (c.perfilCompleto || (c.email && c.fecha_nacimiento)));
 }
 
 function maybePromptProfile() {
@@ -1447,13 +1473,10 @@ async function submitProfile() {
 
   try {
     if (!IS_DEMO) {
-      await sbFetch(`colaboradores?id=eq.${state.myVolunteerId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ email, fecha_nacimiento: birth }),
-      });
+      await sbRpc('completar_perfil', { p_id: parseInt(state.myVolunteerId), p_email: email, p_fecha: birth });
     }
     const c = getCollab(state.myVolunteerId);
-    if (c) { c.email = email; c.fecha_nacimiento = birth; }
+    if (c) { c.email = email; c.fecha_nacimiento = birth; c.perfilCompleto = true; }
     msg.className = 'form-msg success';
     msg.textContent = '¡Datos guardados!';
     setTimeout(() => {
@@ -1502,11 +1525,11 @@ function renderMyCard(containerId) {
     const d = new Date(nextShift.date + 'T12:00:00');
     const diff = Math.round((d - new Date(today + 'T12:00:00')) / 86400000);
     const when = diff === 0 ? 'Hoy' : diff === 1 ? 'Mañana' : `En ${diff} días`;
-    nextInfo = `${when} · ${DAYS_SHORT[d.getDay()]} ${d.getDate()} · ${nextShift.turno} · ${nextShift.rol}`;
+    nextInfo = `${when} · ${DAYS_SHORT[d.getDay()]} ${d.getDate()} · ${nextShift.turno} · ${escHtml(nextShift.rol)}`;
   }
 
   const roleTags = c.roles.split(',').map(r => r.trim()).filter(Boolean).map(r =>
-    `<span class="role-tag" style="background:${c.color.bg};color:${c.color.fg}">${r}</span>`
+    `<span class="role-tag" style="background:${c.color.bg};color:${c.color.fg}">${escHtml(r)}</span>`
   ).join('');
 
   // Upcoming shifts mini-list (next 4 weeks at most)
@@ -1521,7 +1544,7 @@ function renderMyCard(containerId) {
       upcomingHtml += `<div class="my-upcoming-item" onclick="navigateToDate('${s.date}')">
         <span class="my-upcoming-date">${DAYS_SHORT[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}</span>
         <span class="my-upcoming-turno turno-${s.turno.toLowerCase()}">${s.turno}</span>
-        <span class="my-upcoming-rol">${s.rol}</span>
+        <span class="my-upcoming-rol">${escHtml(s.rol)}</span>
         <span class="my-upcoming-when">${when}</span>
       </div>`;
     });
@@ -1536,13 +1559,13 @@ function renderMyCard(containerId) {
   el.innerHTML = `<div class="my-card" style="border-left-color:${c.color.hex}">
     <div class="my-card-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
     <div class="my-card-info">
-      <div class="my-card-name">${c.name}</div>
+      <div class="my-card-name">${escHtml(c.name)}</div>
       <div class="my-card-roles">${roleTags}</div>
       <div class="my-card-stats">
         <div class="my-stat"><strong>${periodShifts.length}</strong> turno${periodShifts.length !== 1 ? 's' : ''} ${periodLabel}</div>
         <div class="my-stat">AM: <strong>${amCount}</strong> · PM: <strong>${pmCount}</strong></div>
       </div>
-      <div style="font-size:12px;color:var(--forest);font-weight:500;margin-top:4px">${nextInfo}</div>
+      <div style="font-size:12px;color:var(--forest);font-weight:500;margin-top:4px">${escHtml(nextInfo)}</div>
     </div>
     <div class="my-card-right">
       <div class="my-total-badge">${totalUpcoming}</div>
@@ -1701,7 +1724,19 @@ function render() {
 // ============================================================
 //  ADMIN — PERFILES
 // ============================================================
-function renderAdmin() {
+let adminProfilesLoaded = false;
+
+async function loadAdminProfiles() {
+  if (IS_DEMO || adminProfilesLoaded) return;
+  const rows = await adminRpc('admin_listar_perfiles');
+  (rows || []).forEach(r => {
+    const c = getCollab(String(r.id));
+    if (c) { c.email = r.email || ''; c.fecha_nacimiento = r.fecha_nacimiento || ''; }
+  });
+  adminProfilesLoaded = true;
+}
+
+async function renderAdmin() {
   const lock = document.getElementById('admin-profiles-lock');
   const content = document.getElementById('admin-profiles-content');
   if (!state.isAdmin) {
@@ -1711,6 +1746,7 @@ function renderAdmin() {
   }
   lock.style.display = 'none';
   content.style.display = 'block';
+  try { await loadAdminProfiles(); } catch (e) { console.error('Error cargando perfiles:', e); if (!state.isAdmin) { renderAdmin(); return; } }
   renderAdminProfiles();
 }
 
@@ -1727,9 +1763,7 @@ async function checkAdminProfilesPass() {
   msg.textContent = 'Verificando...';
 
   try {
-    const data = await sbFetch('config?key=eq.admin_password');
-    const storedPass = data[0]?.value || '';
-    if (input !== storedPass) {
+    if (!(await verifyAdminPass(input))) {
       msg.className = 'form-msg error';
       msg.textContent = 'Contraseña incorrecta.';
       document.getElementById('admin-profiles-pass').value = '';
@@ -1759,13 +1793,13 @@ function renderAdminProfiles() {
     return `<div class="admin-profile-row">
       <div class="admin-profile-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
       <div class="admin-profile-info">
-        <div class="admin-profile-name">${c.name}</div>
-        <div class="admin-profile-roles">${c.roles}</div>
+        <div class="admin-profile-name">${escHtml(c.name)}</div>
+        <div class="admin-profile-roles">${escHtml(c.roles)}</div>
       </div>
       ${status}
       <div class="admin-profile-fields">
-        <input class="form-input" id="admin-email-${c.id}" type="email" placeholder="Correo" value="${c.email || ''}" />
-        <input class="form-input" id="admin-birth-${c.id}" type="date" value="${c.fecha_nacimiento || ''}" />
+        <input class="form-input" id="admin-email-${c.id}" type="email" placeholder="Correo" value="${escHtml(c.email)}" />
+        <input class="form-input" id="admin-birth-${c.id}" type="date" value="${escHtml(c.fecha_nacimiento)}" />
         <button class="btn-primary" onclick="adminSaveProfile('${c.id}')">Guardar</button>
       </div>
     </div>`;
@@ -1783,13 +1817,10 @@ async function adminSaveProfile(collabId) {
 
   try {
     if (!IS_DEMO) {
-      await sbFetch(`colaboradores?id=eq.${collabId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ email: email || null, fecha_nacimiento: birth || null }),
-      });
+      await adminRpc('admin_guardar_perfil', { p_id: parseInt(collabId), p_email: email || null, p_fecha: birth || null });
     }
     const c = getCollab(collabId);
-    if (c) { c.email = email; c.fecha_nacimiento = birth; }
+    if (c) { c.email = email; c.fecha_nacimiento = birth; c.perfilCompleto = !!(email && birth); }
     renderAdminProfiles();
   } catch (e) {
     console.error('Error:', e);
@@ -1844,8 +1875,8 @@ function renderWeekGrid() {
           html += `<div class="person-card${dimClass}" style="background:${isAbsent ? 'var(--red-light)' : c.color.bg};color:${isAbsent ? 'var(--red)' : c.color.fg};${isAbsent ? 'text-decoration:line-through;opacity:0.7' : ''}">
             <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex}">${initials(c.name)}</div>
             <div>
-              <div class="person-name">${c.name.split(' ')[0]}</div>
-              <div class="person-roles">${s.rol}</div>
+              <div class="person-name">${escHtml(c.name.split(' ')[0])}</div>
+              <div class="person-roles">${escHtml(s.rol)}</div>
             </div>
           </div>`;
         });
@@ -1867,12 +1898,12 @@ function renderTeam() {
     const weekDates = getWeekDates(state.weekStart).map(dateToStr);
     const shiftCount = weekDates.flatMap(ds => state.shifts.filter(s => s.date === ds && s.collabId === c.id)).length;
     const roleTags = c.roles.split(',').map(r => r.trim()).filter(Boolean).map(r =>
-      `<span class="role-tag" style="background:${c.color.bg};color:${c.color.fg}">${r}</span>`
+      `<span class="role-tag" style="background:${c.color.bg};color:${c.color.fg}">${escHtml(r)}</span>`
     ).join('');
     return `<div class="team-card" style="border-left-color:${c.color.hex}">
       <div class="team-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
       <div>
-        <div class="team-name">${c.name}</div>
+        <div class="team-name">${escHtml(c.name)}</div>
         <div class="team-roles">${roleTags}</div>
         <div style="font-size:11px;color:var(--ink-muted);margin-top:4px">${shiftCount} turno${shiftCount !== 1 ? 's' : ''} esta semana</div>
       </div>
@@ -1988,8 +2019,8 @@ function renderMonthShifts() {
       return `<div class="mc-person${dimClass}" ${isAbsent ? 'style="opacity:0.5"' : ''}>
         <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex}">${initials(c.name)}</div>
         <div>
-          <div class="mc-name" ${isAbsent ? 'style="text-decoration:line-through"' : ''}>${c.name}</div>
-          <div class="mc-role">${s.rol}</div>
+          <div class="mc-name" ${isAbsent ? 'style="text-decoration:line-through"' : ''}>${escHtml(c.name)}</div>
+          <div class="mc-role">${escHtml(s.rol)}</div>
         </div>
       </div>`;
     }).join('');
@@ -2075,8 +2106,8 @@ function renderNextService(containerId) {
       return `<div class="ns-person" ${isAbsent ? 'style="opacity:0.5;text-decoration:line-through"' : ''}>
         <div class="person-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
         <div class="ns-person-info">
-          <div class="ns-person-name">${c.name}</div>
-          <div class="ns-person-role">${s.rol}${isAbsent ? ' — AUSENTE' : ''}</div>
+          <div class="ns-person-name">${escHtml(c.name)}</div>
+          <div class="ns-person-role">${escHtml(s.rol)}${isAbsent ? ' — AUSENTE' : ''}</div>
         </div>
       </div>`;
     }).join('');
@@ -2089,11 +2120,7 @@ function renderNextService(containerId) {
     html += '<div class="ns-contenido-title">📋 Contenido</div>';
     if (items.length) {
       html += items.map(item => {
-        let text = item.contenido;
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        if (urlRegex.test(text)) {
-          text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-        }
+        let text = linkify(item.contenido);
         return `<div class="ns-contenido-item"><span>${iconMap[item.tipo] || '📝'}</span> <span style="white-space:pre-wrap">${text}</span></div>`;
       }).join('');
     } else {
@@ -2129,7 +2156,7 @@ function renderAbsenceForm() {
   const select = document.getElementById('abs-collab');
   if (select.children.length === 0) {
     select.innerHTML = state.collaborators.map(c =>
-      `<option value="${c.id}"${c.id === state.myVolunteerId ? ' selected' : ''}>${c.name}</option>`
+      `<option value="${c.id}"${c.id === state.myVolunteerId ? ' selected' : ''}>${escHtml(c.name)}</option>`
     ).join('');
   }
   const nextSun = getNextSunday();
@@ -2187,8 +2214,8 @@ function renderAbsenceList() {
         <div class="absence-date-month" style="color:${isPast?'var(--ink-muted)':'var(--red)'}">${MONTHS[d.getMonth()].slice(0,3)}</div>
       </div>
       <div class="absence-info">
-        <div class="absence-person">${c.name}</div>
-        <div class="absence-detail">${a.motivo || 'Sin motivo especificado'}</div>
+        <div class="absence-person">${escHtml(c.name)}</div>
+        <div class="absence-detail">${escHtml(a.motivo || 'Sin motivo especificado')}</div>
       </div>
       <div class="absence-tags">
         <span class="absence-status ${statusClass}">${statusLabel}</span>
@@ -2229,9 +2256,7 @@ async function checkAbsenceAdminPass() {
   msg.textContent = 'Verificando...';
 
   try {
-    const data = await sbFetch('config?key=eq.admin_password');
-    const storedPass = data[0]?.value || '';
-    if (input !== storedPass) {
+    if (!(await verifyAdminPass(input))) {
       msg.className = 'form-msg error';
       msg.textContent = 'Contraseña incorrecta.';
       document.getElementById('abs-admin-pass').value = '';
@@ -2253,10 +2278,7 @@ async function checkAbsenceAdminPass() {
 
 async function approveAbsence(id) {
   try {
-    await sbFetch(`ausencias?id=eq.${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ estado: 'Aprobada' }),
-    });
+    await adminRpc('admin_estado_ausencia', { p_id: parseInt(id), p_estado: 'Aprobada' });
     const a = state.ausencias.find(a => a.id === id);
     if (a) a.estado = 'Aprobada';
     renderAbsenceList();
@@ -2265,10 +2287,7 @@ async function approveAbsence(id) {
 
 async function rejectAbsence(id) {
   try {
-    await sbFetch(`ausencias?id=eq.${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ estado: 'Rechazada' }),
-    });
+    await adminRpc('admin_estado_ausencia', { p_id: parseInt(id), p_estado: 'Rechazada' });
     const a = state.ausencias.find(a => a.id === id);
     if (a) a.estado = 'Rechazada';
     renderAbsenceList();
@@ -2278,7 +2297,7 @@ async function rejectAbsence(id) {
 async function deleteAbsence(id) {
   if (!confirm('¿Eliminar esta ausencia?')) return;
   try {
-    await sbFetch(`ausencias?id=eq.${id}`, { method: 'DELETE' });
+    await adminRpc('admin_borrar_ausencia', { p_id: parseInt(id) });
     state.ausencias = state.ausencias.filter(a => a.id !== id);
     renderAbsenceList();
   } catch (e) { alert('Error al eliminar.'); }
@@ -2420,8 +2439,8 @@ function renderDashboard() {
     gridHtml += `<div class="dash-volunteer">
       <div class="dash-vol-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
       <div class="dash-vol-info">
-        <div class="dash-vol-name">${c.name}</div>
-        <div class="dash-vol-roles">${roleText}</div>
+        <div class="dash-vol-name">${escHtml(c.name)}</div>
+        <div class="dash-vol-roles">${escHtml(roleText)}</div>
       </div>
       <div class="dash-vol-bar-wrap">
         <div class="dash-vol-bar">
@@ -2480,7 +2499,7 @@ function renderLista() {
   if (!collabSelect.children.length || collabSelect.children.length === 1) {
     collabSelect.innerHTML = '<option value="">Todos</option>' +
       state.collaborators.filter(c => c.id !== '11').map(c =>
-        `<option value="${c.id}">${c.name}</option>`
+        `<option value="${c.id}">${escHtml(c.name)}</option>`
       ).join('');
   }
 
@@ -2512,7 +2531,7 @@ function renderLista() {
 
     if (isEditing) {
       const collabOpts = state.collaborators.filter(x => x.id !== '11').map(x =>
-        `<option value="${x.id}"${x.id === s.collabId ? ' selected' : ''}>${x.name}</option>`
+        `<option value="${x.id}"${x.id === s.collabId ? ' selected' : ''}>${escHtml(x.name)}</option>`
       ).join('');
       html += `<div class="lista-row editing">
         <input type="date" id="edit-list-date" value="${s.date}" />
@@ -2521,7 +2540,7 @@ function renderLista() {
           <option value="PM"${s.turno==='PM'?' selected':''}>PM</option>
         </select>
         <select id="edit-list-collab">${collabOpts}</select>
-        <input type="text" id="edit-list-rol" value="${s.rol.replace(/"/g,'&quot;')}" placeholder="Rol" list="roles-list" />
+        <input type="text" id="edit-list-rol" value="${escHtml(s.rol)}" placeholder="Rol" list="roles-list" />
         <div class="lista-actions" style="grid-column:span 2;display:flex;gap:4px;">
           <button class="lista-btn" onclick="saveListEdit('${s.id}')" style="background:var(--forest);color:white;border-color:var(--forest);" title="Guardar">✓</button>
           <button class="lista-btn" onclick="cancelListEdit()" title="Cancelar">✕</button>
@@ -2533,10 +2552,10 @@ function renderLista() {
         <span class="lista-turno ${s.turno.toLowerCase()}">${s.turno}</span>
         <div class="lista-person">
           <div class="lista-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
-          <span class="lista-name">${c.name}</span>
+          <span class="lista-name">${escHtml(c.name)}</span>
         </div>
-        <span class="lista-rol">${s.rol}</span>
-        <span class="lista-notas">${s.notas || '—'}</span>
+        <span class="lista-rol">${escHtml(s.rol)}</span>
+        <span class="lista-notas">${escHtml(s.notas || '—')}</span>
         <div class="lista-actions">
           <button class="lista-btn" onclick="event.stopPropagation();startListEdit('${s.id}')" title="Editar">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -2594,13 +2613,11 @@ async function saveListEdit(shiftId) {
   shift.rol = rol;
 
   try {
-    await sbFetch(`turnos?id=eq.${shiftId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        fecha: date, turno, colaborador_id: parseInt(collabId), rol, notas: shift.notas || ''
-      }),
+    await adminRpc('admin_actualizar_turno', {
+      p_id: parseInt(shiftId),
+      p_cambios: { fecha: date, turno, colaborador_id: parseInt(collabId), rol, notas: shift.notas || '' },
     });
-  } catch (err) { console.error('Error:', err); }
+  } catch (err) { console.error('Error:', err); alert('No se pudo guardar el cambio en el servidor.'); }
 
   editingListShiftId = '';
   renderLista();
@@ -2612,8 +2629,8 @@ async function deleteListShift(shiftId) {
   if (!confirm('¿Eliminar este turno?')) return;
 
   try {
-    await sbFetch(`turnos?id=eq.${shiftId}`, { method: 'DELETE' });
-  } catch (err) { console.error('Error:', err); }
+    await adminRpc('admin_borrar_turno', { p_id: parseInt(shiftId) });
+  } catch (err) { console.error('Error:', err); alert('No se pudo eliminar el turno.'); return; }
 
   state.shifts = state.shifts.filter(s => s.id !== shiftId);
   renderLista();
@@ -2667,8 +2684,8 @@ function renderListaCards() {
       html += `<div class="card-item" draggable="true" ondragstart="handleDragStart(event, '${s.id}')" ondragend="handleDragEnd(event)" onclick="if(!window._dragging)openDayDetail('${s.date}','${s.turno}')">
         <div class="card-avatar" style="background:${c.color.hex}">${initials(c.name)}</div>
         <div class="card-info">
-          <div class="card-name">${c.name}</div>
-          <div class="card-rol">${s.rol}</div>
+          <div class="card-name">${escHtml(c.name)}</div>
+          <div class="card-rol">${escHtml(s.rol)}</div>
         </div>
         <span class="card-turno ${s.turno.toLowerCase()}">${s.turno}</span>
       </div>`;
@@ -2711,6 +2728,7 @@ async function handleDrop(e, newDate) {
   e.currentTarget.classList.remove('drag-over');
 
   if (!draggedShiftId) return;
+  if (!state.isAdmin) { draggedShiftId = ''; openAssignShiftModal(); return; }
 
   const shift = state.shifts.find(s => s.id === draggedShiftId);
   if (!shift) return;
@@ -2723,11 +2741,8 @@ async function handleDrop(e, newDate) {
 
   // Update in Supabase
   try {
-    await sbFetch(`turnos?id=eq.${draggedShiftId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ fecha: newDate }),
-    });
-  } catch (err) { console.error('Error moving shift:', err); }
+    await adminRpc('admin_actualizar_turno', { p_id: parseInt(draggedShiftId), p_cambios: { fecha: newDate } });
+  } catch (err) { console.error('Error moving shift:', err); shift.date = oldDate; alert('No se pudo mover el turno.'); }
 
   draggedShiftId = '';
   renderLista();
@@ -2766,7 +2781,7 @@ function showAssignForm(date, turno) {
 
   const collabSelect = document.getElementById('assign-collab');
   collabSelect.innerHTML = '<option value="">Seleccionar...</option>' +
-    state.collaborators.map(c => `<option value="${c.id}"${c.id === state.myVolunteerId ? ' selected' : ''}>${c.name}</option>`).join('');
+    state.collaborators.map(c => `<option value="${c.id}"${c.id === state.myVolunteerId ? ' selected' : ''}>${escHtml(c.name)}</option>`).join('');
 
   const dateInput = document.getElementById('assign-date');
   if (date) dateInput.value = date;
@@ -2802,10 +2817,9 @@ function checkAdminPassword() {
   msg.className = 'form-msg';
   msg.textContent = 'Verificando...';
 
-  sbFetch('config?key=eq.admin_password')
-    .then(data => {
-      const storedPass = data[0]?.value || '';
-      if (input !== storedPass) {
+  verifyAdminPass(input)
+    .then(ok => {
+      if (!ok) {
         msg.className = 'form-msg error';
         msg.textContent = 'Contraseña incorrecta';
         document.getElementById('assign-password-input').value = '';
@@ -2863,11 +2877,8 @@ async function submitShiftAssign() {
   msg.textContent = 'Guardando...';
 
   try {
-    const [result] = await sbFetch('turnos', {
-      method: 'POST',
-      body: JSON.stringify({
-        fecha: date, turno, colaborador_id: parseInt(collabId), rol, notas
-      }),
+    const [result] = await adminRpc('admin_crear_turno', {
+      p_fecha: date, p_turno: turno, p_colaborador_id: parseInt(collabId), p_rol: rol, p_notas: notas,
     });
 
     state.shifts.push({
@@ -2931,13 +2942,11 @@ async function saveShiftEdit(shiftId) {
   msg.textContent = 'Guardando...';
 
   try {
-    await sbFetch(`turnos?id=eq.${shiftId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        fecha: date, turno, colaborador_id: parseInt(collabId), rol, notas,
-      }),
+    await adminRpc('admin_actualizar_turno', {
+      p_id: parseInt(shiftId),
+      p_cambios: { fecha: date, turno, colaborador_id: parseInt(collabId), rol, notas },
     });
-  } catch (err) { console.error('Error:', err); }
+  } catch (err) { console.error('Error:', err); alert('No se pudo guardar el cambio en el servidor.'); }
 
   editingShiftId = '';
   renderModalBody();
@@ -2950,11 +2959,11 @@ async function removeShift(shiftId) {
   }
   if (!confirm('¿Eliminar este turno?')) return;
 
-  state.shifts = state.shifts.filter(s => s.id !== shiftId);
-
   try {
-    await sbFetch(`turnos?id=eq.${shiftId}`, { method: 'DELETE' });
-  } catch (err) { console.error('Error:', err); }
+    await adminRpc('admin_borrar_turno', { p_id: parseInt(shiftId) });
+  } catch (err) { console.error('Error:', err); alert('No se pudo eliminar el turno.'); return; }
+
+  state.shifts = state.shifts.filter(s => s.id !== shiftId);
 
   editingShiftId = '';
   renderModalBody();
@@ -3003,7 +3012,7 @@ function renderModalBody() {
     const isEditing = s.id === editingShiftId;
 
     if (isEditing) {
-      const allOtherCollabs = state.collaborators.map(x => `<option value="${x.id}"${x.id === s.collabId ? ' selected' : ''}>${x.name}</option>`).join('');
+      const allOtherCollabs = state.collaborators.map(x => `<option value="${x.id}"${x.id === s.collabId ? ' selected' : ''}>${escHtml(x.name)}</option>`).join('');
       return `<div class="detail-field editing">
         <div class="shift-edit-form">
           <div class="shift-edit-row">
@@ -3025,11 +3034,11 @@ function renderModalBody() {
           </div>
           <div class="shift-edit-row">
             <label>Rol</label>
-            <input id="edit-s-rol" type="text" value="${s.rol.replace(/"/g, '&quot;')}" list="roles-list" />
+            <input id="edit-s-rol" type="text" value="${escHtml(s.rol)}" list="roles-list" />
           </div>
           <div class="shift-edit-row">
             <label>Notas</label>
-            <input id="edit-s-notas" type="text" value="${s.notas ? s.notas.replace(/"/g, '&quot;') : ''}" placeholder="Opcional..." />
+            <input id="edit-s-notas" type="text" value="${escHtml(s.notas)}" placeholder="Opcional..." />
           </div>
           <div class="shift-edit-actions">
             <button class="btn-save-shift" onclick="saveShiftEdit('${s.id}')">Guardar</button>
@@ -3045,10 +3054,10 @@ function renderModalBody() {
       <div style="display:flex;align-items:center;gap:10px">
         <div class="person-avatar" style="background:${isAbsent ? 'var(--red)' : c.color.hex};width:30px;height:30px;font-size:10px">${initials(c.name)}</div>
         <div style="flex:1">
-          <div style="font-weight:500;font-size:14px;${isAbsent ? 'text-decoration:line-through' : ''}">${c.name}</div>
-          <div style="font-size:12px;color:var(--ink-muted)">${s.rol}</div>
+          <div style="font-weight:500;font-size:14px;${isAbsent ? 'text-decoration:line-through' : ''}">${escHtml(c.name)}</div>
+          <div style="font-size:12px;color:var(--ink-muted)">${escHtml(s.rol)}</div>
           ${isAbsent ? '<div style="font-size:11px;color:var(--red);font-weight:500;margin-top:2px">AUSENTE</div>' : ''}
-          ${s.notas ? `<div style="font-size:12px;color:var(--ink-muted);font-style:italic;margin-top:2px">${s.notas}</div>` : ''}
+          ${s.notas ? `<div style="font-size:12px;color:var(--ink-muted);font-style:italic;margin-top:2px">${escHtml(s.notas)}</div>` : ''}
         </div>
         <button class="edit-shift-btn" onclick="editShift('${s.id}')" title="Editar">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -3077,7 +3086,7 @@ function renderModalBody() {
         html += `<div class="contenido-item editing-contenido">
           <span class="contenido-icon">${iconMap[item.tipo] || '📝'}</span>
           <div class="contenido-edit-form" style="flex:1">
-            <textarea id="edit-cont-text" rows="2" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;background:white;resize:vertical;">${item.contenido.replace(/"/g, '&quot;')}</textarea>
+            <textarea id="edit-cont-text" rows="2" style="width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:13px;background:white;resize:vertical;">${escHtml(item.contenido)}</textarea>
             <div class="contenido-edit-actions">
               <button class="btn-save-contenido" onclick="saveContenidoEdit('${item.id}')">Guardar</button>
               <button class="btn-cancel-contenido" onclick="cancelContenidoEdit()">Cancelar</button>
@@ -3086,12 +3095,7 @@ function renderModalBody() {
           </div>
         </div>`;
       } else {
-        let text = item.contenido;
-        // Auto-link URLs
-        const urlRegex = /(https?:\/\/[^\s]+)/g;
-        if (urlRegex.test(text)) {
-          text = text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener">$1</a>');
-        }
+        let text = linkify(item.contenido);
         html += `<div class="contenido-item tipo-${item.tipo || 'nota'}">
           <span class="contenido-icon">${iconMap[item.tipo] || '📝'}</span>
           <div class="contenido-text" style="white-space:pre-wrap;word-break:break-word;">
@@ -3269,6 +3273,10 @@ function moveContenido(id, direction) {
 // ============================================================
 function escHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
+
+function linkify(s) {
+  return escHtml(s).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
 }
 
 function getCancion(id) {
