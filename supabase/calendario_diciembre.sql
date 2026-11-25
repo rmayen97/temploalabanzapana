@@ -23,28 +23,15 @@ delete from public.ausencias
 
 -- 3) Turnos de diciembre
 insert into public.turnos (fecha, turno, colaborador_id, rol, notas) values
--- ===== Ensayos (turno 'PM', 7:00 pm) =====
+-- ===== Ensayos (turno 'PM', 7:00 pm, como ENSAYO GENERAL) =====
+-- Miércoles 25 nov (hoy)
+('2026-11-25','PM',11,'Músicos y Voces','Ensayo 7:00 pm'),
 -- Viernes 4 dic
-('2026-12-04','PM',5,'Voz Lead','Ensayo 7:00 pm'),
-('2026-12-04','PM',2,'Voz de Apoyo','Ensayo 7:00 pm'),
-('2026-12-04','PM',7,'Guitarra','Ensayo 7:00 pm'),
-('2026-12-04','PM',4,'Bajo','Ensayo 7:00 pm'),
-('2026-12-04','PM',3,'Percusión','Ensayo 7:00 pm'),
-('2026-12-04','PM',12,'Percusión','Ensayo 7:00 pm'),
+('2026-12-04','PM',11,'Músicos y Voces','Ensayo 7:00 pm'),
 -- Miércoles 9 dic
-('2026-12-09','PM',5,'Voz Lead','Ensayo 7:00 pm'),
-('2026-12-09','PM',2,'Voz de Apoyo','Ensayo 7:00 pm'),
-('2026-12-09','PM',7,'Guitarra','Ensayo 7:00 pm'),
-('2026-12-09','PM',4,'Bajo','Ensayo 7:00 pm'),
-('2026-12-09','PM',3,'Percusión','Ensayo 7:00 pm'),
-('2026-12-09','PM',12,'Percusión','Ensayo 7:00 pm'),
+('2026-12-09','PM',11,'Músicos y Voces','Ensayo 7:00 pm'),
 -- Miércoles 16 dic
-('2026-12-16','PM',5,'Voz Lead','Ensayo 7:00 pm'),
-('2026-12-16','PM',2,'Voz de Apoyo','Ensayo 7:00 pm'),
-('2026-12-16','PM',7,'Guitarra','Ensayo 7:00 pm'),
-('2026-12-16','PM',4,'Bajo','Ensayo 7:00 pm'),
-('2026-12-16','PM',3,'Percusión','Ensayo 7:00 pm'),
-('2026-12-16','PM',12,'Percusión','Ensayo 7:00 pm'),
+('2026-12-16','PM',11,'Músicos y Voces','Ensayo 7:00 pm'),
 
 -- ===== Domingo 6 dic (semana par — Herdy PM) =====
 ('2026-12-06','AM',1,'Voz Bilingüe, Guitarra',''),
